@@ -16,10 +16,13 @@ const itemSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+    imageUrl: {
+        type: String,
+        default: ''
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true

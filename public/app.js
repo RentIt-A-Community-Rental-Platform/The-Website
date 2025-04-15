@@ -81,10 +81,10 @@ itemForm.addEventListener('submit', async (e) => {
     const price = document.getElementById('price').value;
     const token = localStorage.getItem('token');
 
-    if (!token) {
-        alert('Please log in first');
-        return;
-    }
+    // if (!token) {
+    //     alert('Please log in first');
+    //     return;
+    // }
 
     try {
         const response = await fetch(`${API_URL}/items`, {

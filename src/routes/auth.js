@@ -2,73 +2,79 @@ import express from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
 console.log('🔑 Auth routes initialized');
 
-// Register new user
+// Hardcoded test credentials - PLAIN TEXT for testing
+const TEST_USER = {
+    email: 'test@test.com',
+    password: 'test123',
+    name: 'Test User',
+    isTestUser: true  // Mark as test user to skip password hashing
+};
+
+// Create test user on server start
+async function createTestUser() {
+    try {
+        // Check if test user exists
+        let testUser = await User.findOne({ email: TEST_USER.email });
+        
+        if (!testUser) {
+            // Create new test user with plain text password
+            testUser = new User(TEST_USER);
+            await testUser.save();
+            console.log('✅ Test user created successfully');
+        }
+    } catch (error) {
+        console.error('Failed to create test user:', error);
+    }
+}
+
+// Initialize test user
+createTestUser();
+
+// Register
 router.post('/register', async (req, res) => {
     try {
-        console.log('📝 Registration attempt:', req.body);
         const { email, password, name } = req.body;
         
-        if (!email || !password || !name) {
-            console.log('❌ Missing required fields');
-            return res.status(400).json({ error: 'All fields are required' });
-        }
-        
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            console.log('❌ User already exists:', email);
-            return res.status(400).json({ error: 'Email already registered' });
-        }
-        
-        // Create new user
-        const user = new User({
-            email,
-            password,
-            name,
-            googleId: undefined
-        });
-        
+        // Create user directly
+        const user = new User({ email, password, name });
         await user.save();
-        console.log('✅ User created successfully:', email);
         
-        // Log in the user after registration
-        req.login(user, (err) => {
-            if (err) {
-                console.error('❌ Login after registration failed:', err);
-                return res.status(500).json({ error: 'Login after registration failed' });
-            }
-            res.status(201).json({ user });
+        res.status(201).json({ 
+            user: { email, name },
+            token: 'dummy-token' 
         });
     } catch (error) {
-        console.error('❌ Registration error:', error);
-        res.status(500).json({ 
-            error: 'Registration failed',
-            details: error.message 
-        });
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Registration failed' });
     }
 });
 
-// Login with email/password
-router.post('/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
-        if (err) {
-            return next(err);
-        }
+// Login
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // Find user and check password directly
+        const user = await User.findOne({ email, password });
+        
         if (!user) {
-            return res.status(400).json({ error: info.message });
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
-        req.login(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-            res.json({ user });
+        
+        res.json({ 
+            user: { email: user.email, name: user.name },
+            token: 'dummy-token'
         });
-    })(req, res, next);
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+    }
 });
 
 // Get current user

@@ -241,6 +241,36 @@ function logout() {
     window.location.reload();
 }
 
+// Add test login button
+const testLoginBtn = document.createElement('button');
+testLoginBtn.textContent = 'Test Login (Development Only)';
+testLoginBtn.className = 'w-full bg-gray-500 text-white p-2 rounded mt-4';
+document.querySelector('form').appendChild(testLoginBtn);
+
+testLoginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+        const response = await fetch('/auth/test-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('user', JSON.stringify(data.user));
+            window.location.href = '/list.html';
+        } else {
+            throw new Error(data.error || 'Test login failed');
+        }
+    } catch (error) {
+        console.error('Test login error:', error);
+        alert('Test login failed. Please try again.');
+    }
+});
+
 // Initialize
 loadFeaturedItems();
 checkAuth(); 

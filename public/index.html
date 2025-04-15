@@ -46,14 +46,14 @@
                 <div class="flex-1 flex items-center justify-center px-6">
                     <div class="w-full max-w-3xl flex space-x-4">
                         <div class="flex-1 flex rounded-lg bg-gray-100 p-2">
-                            <input type="text" placeholder="Search anything..." class="w-full bg-transparent border-none focus:ring-0">
-                            <button class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                            <input type="text" id="searchInput" placeholder="Search anything..." class="w-full bg-transparent border-none focus:ring-0">
+                            <button id="searchButton" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
                         <div class="flex space-x-2">
-                            <input type="date" class="rounded-lg bg-gray-100 px-3 py-2 border-none focus:ring-0">
-                            <input type="date" class="rounded-lg bg-gray-100 px-3 py-2 border-none focus:ring-0">
+                            <input type="date" id="startDate" class="rounded-lg bg-gray-100 px-3 py-2 border-none focus:ring-0">
+                            <input type="date" id="endDate" class="rounded-lg bg-gray-100 px-3 py-2 border-none focus:ring-0">
                         </div>
                     </div>
                 </div>
@@ -67,80 +67,177 @@
         </div>
     </nav>
 
-    <!-- Categories -->
-    <div class="max-w-7xl mx-auto mt-8">
-        <div class="grid grid-cols-10 gap-8 px-4">
-            <a href="#" class="flex flex-col items-center group">
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Available Items for Rent</h1>
+        
+        <!-- Categories -->
+        <div class="grid grid-cols-10 gap-8 mb-12">
+            <button class="category-btn flex flex-col items-center group" data-category="all">
+                <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
+                    <i class="fas fa-border-all text-2xl text-gray-600 group-hover:text-primary-500"></i>
+                </div>
+                <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">All</span>
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Party & Events">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-glass-cheers text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
-                <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Party and Events</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+                <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Party & Events</span>
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Gaming">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-gamepad text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Gaming</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Photography">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-camera text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Photography</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Music">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-music text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Music</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Clothing">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-tshirt text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Clothing</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Kitchen">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-utensils text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Kitchen</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Books">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-book text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Books</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
-                <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
-                    <i class="fas fa-car text-2xl text-gray-600 group-hover:text-primary-500"></i>
-                </div>
-                <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Transport</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Electronics">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
                     <i class="fas fa-laptop text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
                 <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Electronics</span>
-            </a>
-            <a href="#" class="flex flex-col items-center group">
+            </button>
+            <button class="category-btn flex flex-col items-center group" data-category="Other">
                 <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-primary-100">
-                    <i class="fas fa-dumbbell text-2xl text-gray-600 group-hover:text-primary-500"></i>
+                    <i class="fas fa-ellipsis-h text-2xl text-gray-600 group-hover:text-primary-500"></i>
                 </div>
-                <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Fitness</span>
-            </a>
+                <span class="mt-2 text-sm text-gray-600 group-hover:text-primary-500">Other</span>
+            </button>
+        </div>
+
+        <!-- Items Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="itemsGrid">
+            <!-- Items will be dynamically inserted here -->
         </div>
     </div>
 
-    <!-- Featured Items -->
-    <div class="max-w-7xl mx-auto mt-12 px-4 pb-12">
-        <h2 class="text-2xl font-semibold mb-6">Featured Items</h2>
-        <div id="featuredItems" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <!-- Items will be loaded here -->
-        </div>
-    </div>
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let currentCategory = 'all';
+        let allItems = [];
 
-    <script src="app.js"></script>
+        // Set min dates for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').min = today;
+        document.getElementById('endDate').min = today;
+
+        // Handle date selection
+        document.getElementById('startDate').addEventListener('change', (e) => {
+            document.getElementById('endDate').min = e.target.value;
+            if (document.getElementById('endDate').value && document.getElementById('endDate').value < e.target.value) {
+                document.getElementById('endDate').value = e.target.value;
+            }
+        });
+
+        // Fetch and display items
+        async function loadItems() {
+            try {
+                const response = await fetch(`${API_URL}/items`);
+                const items = await response.json();
+                allItems = items;
+                displayItems(items);
+            } catch (error) {
+                console.error('Error loading items:', error);
+            }
+        }
+
+        // Display items in the grid
+        function displayItems(items) {
+            console.log(items);
+            const grid = document.getElementById('itemsGrid');
+            grid.innerHTML = items
+                .filter(item => currentCategory === 'all' || item.category === currentCategory)
+                .map(item => `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        ${item.photos && item.photos.length > 0 
+                            ? `<img src="/uploads/${item.photos[0]}" alt="${item.title}" class="w-full h-48 object-cover">`
+                            : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-4xl"></i>
+                               </div>`
+                        }
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-semibold text-lg">${item.title}</h3>
+                                <span class="text-sm px-2 py-1 bg-gray-100 rounded-full">${item.category}</span>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-4">${item.description}</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-blue-600 font-bold">$${item.price}/day</p>
+                                    <p class="text-gray-500 text-sm">Deposit: $${item.deposit}</p>
+                                </div>
+                                <button onclick="window.location.href='/item.html?id=${item._id}'" 
+                                        class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                                    Rent Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        // Handle category filtering
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active state
+                document.querySelectorAll('.category-btn').forEach(b => {
+                    b.querySelector('div').classList.remove('bg-primary-100');
+                    b.querySelector('i').classList.remove('text-primary-500');
+                    b.querySelector('span').classList.remove('text-primary-500');
+                });
+                
+                btn.querySelector('div').classList.add('bg-primary-100');
+                btn.querySelector('i').classList.add('text-primary-500');
+                btn.querySelector('span').classList.add('text-primary-500');
+
+                // Update displayed items
+                currentCategory = btn.dataset.category;
+                displayItems(allItems);
+            });
+        });
+
+        // Handle search
+        document.getElementById('searchButton').addEventListener('click', () => {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredItems = allItems.filter(item => 
+                item.title.toLowerCase().includes(searchTerm) ||
+                item.description.toLowerCase().includes(searchTerm)
+            );
+            displayItems(filteredItems);
+        });
+
+        // Load items when page loads
+        loadItems();
+    </script>
 </body>
 </html> 

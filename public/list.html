@@ -3,55 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List Items - University Rentals</title>
+    <title>List Your Item - RentIt</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow">
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <h1 class="text-xl font-bold">University Rentals</h1>
-                </div>
-                <div class="flex items-center">
-                    <button id="logoutBtn" class="text-red-500 hover:text-red-700">Logout</button>
+                    <a href="/" class="flex items-center">
+                        <img src="/images/logo.svg" alt="RentIt" class="h-8 w-auto">
+                        <span class="ml-2 text-xl font-bold text-primary-600">RentIt</span>
+                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Item Form -->
-        <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-2xl font-bold mb-4">List an Item</h2>
-            <form id="itemForm">
-                <div class="mb-4">
-                    <label class="block text-gray-700 mb-2" for="title">Title</label>
-                    <input type="text" id="title" class="w-full p-2 border rounded" required>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 mb-2" for="description">Description</label>
-                    <textarea id="description" class="w-full p-2 border rounded" required></textarea>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 mb-2" for="price">Price ($)</label>
-                    <input type="number" id="price" class="w-full p-2 border rounded" required>
-                </div>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    List Item
-                </button>
-            </form>
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto mt-8 px-4 pb-12">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between mb-2">
+                <span class="text-primary-600 font-medium step-indicator active" data-step="1">Choose Category</span>
+                <span class="text-gray-400 font-medium step-indicator" data-step="2">Upload Photo</span>
+                <span class="text-gray-400 font-medium step-indicator" data-step="3">Item Details</span>
+                <span class="text-gray-400 font-medium step-indicator" data-step="4">Review & Post</span>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full">
+                <div class="h-full w-1/4 bg-primary-500 rounded-full transition-all duration-300" id="progressBar"></div>
+            </div>
         </div>
 
-        <!-- Items List -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-2xl font-bold mb-4">Available Items</h2>
-            <div id="itemsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Items will be displayed here -->
+        <!-- Step 1: Category Selection -->
+        <div class="step-content" id="step1">
+            <h2 class="text-2xl font-semibold mb-6">What are you renting out?</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Party & Events">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-glass-cheers text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Party & Events</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Gaming">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-gamepad text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Gaming</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Photography">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-camera text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Photography</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Music">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-music text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Music</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Clothing">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-tshirt text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Clothing</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Kitchen">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-utensils text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Kitchen</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Books">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-book text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Books</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Electronics">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-laptop text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Electronics</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Sports">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-basketball-ball text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Sports</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Tools">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-tools text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Tools</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Art">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-palette text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Art</span>
+                </button>
+
+                <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Other">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-50 flex items-center justify-center">
+                        <i class="fas fa-ellipsis-h text-3xl text-gray-600"></i>
+                    </div>
+                    <span class="font-medium">Other</span>
+                </button>
             </div>
+        </div>
+
+        <!-- Step 2: Photo Upload -->
+        <div class="step-content hidden" id="step2">
+            <h2 class="text-2xl font-semibold mb-6">Upload Photos</h2>
+            <div class="bg-white p-8 rounded-lg shadow">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center" id="dropZone">
+                    <input type="file" id="photoInput" class="hidden" accept="image/*" multiple>
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-2">Drag and drop your photos here</p>
+                    <p class="text-gray-400 text-sm mb-4">or</p>
+                    <button type="button" class="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600" onclick="document.getElementById('photoInput').click()">
+                        Choose Photos
+                    </button>
+                </div>
+                <div id="previewContainer" class="grid grid-cols-3 gap-4 mt-6"></div>
+            </div>
+        </div>
+
+        <!-- Step 3: Item Details -->
+        <div class="step-content hidden" id="step3">
+            <h2 class="text-2xl font-semibold mb-6">Item Details</h2>
+            <div class="bg-white p-8 rounded-lg shadow">
+                <form id="itemDetailsForm">
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="title">
+                            Title
+                        </label>
+                        <input type="text" id="title" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
+                            Description
+                        </label>
+                        <textarea id="description" rows="4" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="price">
+                                Daily Rate ($)
+                            </label>
+                            <input type="number" id="price" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="deposit">
+                                Security Deposit ($)
+                            </label>
+                            <input type="number" id="deposit" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 4: Review -->
+        <div class="step-content hidden" id="step4">
+            <h2 class="text-2xl font-semibold mb-6">Review Your Listing</h2>
+            <div class="bg-white p-8 rounded-lg shadow">
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <div id="reviewPhotos" class="mb-6">
+                            <!-- Photos will be displayed here -->
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-gray-700">Category</h3>
+                            <p id="reviewCategory" class="text-gray-600"></p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-gray-700">Title</h3>
+                            <p id="reviewTitle" class="text-gray-600"></p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-gray-700">Description</h3>
+                            <p id="reviewDescription" class="text-gray-600"></p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-gray-700">Daily Rate</h3>
+                            <p id="reviewPrice" class="text-gray-600"></p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="font-semibold text-gray-700">Security Deposit</h3>
+                            <p id="reviewDeposit" class="text-gray-600"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-8">
+            <button id="prevBtn" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 hidden">
+                Previous
+            </button>
+            <button id="nextBtn" class="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                Next
+            </button>
+            <button id="submitBtn" class="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 hidden">
+                Post Item
+            </button>
         </div>
     </div>
 
-    <script src="list.js"></script>
+    <script src="listing.js"></script>
 </body>
 </html> 

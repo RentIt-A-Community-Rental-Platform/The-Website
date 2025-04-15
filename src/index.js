@@ -7,6 +7,8 @@ import { dirname, join } from 'path';
 import multer from 'multer';
 import { itemRoutes } from './routes/items.js';
 import { setupGemini } from './utils/gemini.js';
+import { authRoutes } from './routes/auth.js';
+import { mkdirSync } from 'fs';
 
 dotenv.config();
 
@@ -18,7 +20,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(join(__dirname, '../public')));
+app.use(express.static('public'));
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
 // Root route for testing
@@ -39,7 +41,7 @@ app.get('/api', (req, res) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rentit')
   .then(() => {
     console.log('✅ Connected to MongoDB successfully!');
   })
@@ -52,7 +54,16 @@ mongoose.connect(process.env.MONGODB_URI)
 setupGemini();
 
 // Routes
+app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
+
+// Create uploads directory if it doesn't exist
+try {
+    mkdirSync(join(__dirname, 'uploads'), { recursive: true });
+    console.log('📁 Uploads directory ready');
+} catch (error) {
+    console.error('Error creating uploads directory:', error);
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {

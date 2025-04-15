@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details - RentIt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center">
+                        <img src="/images/logo.svg" alt="RentIt" class="h-8 w-auto">
+                        <span class="ml-2 text-xl font-bold text-primary-600">RentIt</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
+                    <a href="/auth.html" class="text-gray-600 hover:text-gray-900">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Image Gallery -->
+            <div class="space-y-4">
+                <div id="mainImage" class="w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
+                    <!-- Main image will be inserted here -->
+                </div>
+                <div id="thumbnails" class="grid grid-cols-4 gap-4">
+                    <!-- Thumbnails will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Item Details -->
+            <div class="space-y-6">
+                <div>
+                    <h1 id="itemTitle" class="text-3xl font-bold"></h1>
+                    <span id="itemCategory" class="inline-block mt-2 px-3 py-1 bg-gray-100 rounded-full text-sm"></span>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-2xl font-bold text-primary-600">$<span id="itemPrice"></span>/day</p>
+                    <p class="text-gray-600">Security Deposit: $<span id="itemDeposit"></span></p>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-2">Description</h2>
+                    <p id="itemDescription" class="text-gray-600"></p>
+                </div>
+
+                <!-- Rental Period Selection -->
+                <div class="bg-gray-50 p-6 rounded-lg space-y-4">
+                    <h2 class="text-xl font-semibold">Select Rental Period</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Start Date</label>
+                            <input type="date" id="rentStartDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">End Date</label>
+                            <input type="date" id="rentEndDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Calculation -->
+                <div class="bg-gray-50 p-6 rounded-lg space-y-4">
+                    <h2 class="text-xl font-semibold">Price Breakdown</h2>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>Daily Rate</span>
+                            <span>$<span id="dailyRate"></span></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Number of Days</span>
+                            <span id="numberOfDays">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Security Deposit</span>
+                            <span>$<span id="securityDeposit"></span></span>
+                        </div>
+                        <div class="border-t pt-2 flex justify-between font-bold">
+                            <span>Total</span>
+                            <span>$<span id="totalPrice">-</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="rentButton" class="w-full py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold">
+                    Rent Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let item = null;
+
+        // Get item ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+
+        // Set min dates for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('rentStartDate').min = today;
+        document.getElementById('rentEndDate').min = today;
+
+        // Handle date selection
+        document.getElementById('rentStartDate').addEventListener('change', (e) => {
+            document.getElementById('rentEndDate').min = e.target.value;
+            if (document.getElementById('rentEndDate').value && document.getElementById('rentEndDate').value < e.target.value) {
+                document.getElementById('rentEndDate').value = e.target.value;
+            }
+            updatePriceCalculation();
+        });
+
+        document.getElementById('rentEndDate').addEventListener('change', () => {
+            updatePriceCalculation();
+        });
+
+        // Update price calculation
+        function updatePriceCalculation() {
+            const startDate = document.getElementById('rentStartDate').value;
+            const endDate = document.getElementById('rentEndDate').value;
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                
+                document.getElementById('numberOfDays').textContent = days;
+                document.getElementById('totalPrice').textContent = (days * item.price + item.deposit).toFixed(2);
+            }
+        }
+
+        // Load and display item details
+        async function loadItem() {
+            try {
+                const response = await fetch(`${API_URL}/items/${itemId}`);
+                item = await response.json();
+
+                // Update item details
+                document.getElementById('itemTitle').textContent = item.title;
+                document.getElementById('itemCategory').textContent = item.category;
+                document.getElementById('itemPrice').textContent = item.price;
+                document.getElementById('itemDeposit').textContent = item.deposit;
+                document.getElementById('itemDescription').textContent = item.description;
+                document.getElementById('dailyRate').textContent = item.price;
+                document.getElementById('securityDeposit').textContent = item.deposit;
+
+                // Update images
+                if (item.photos && item.photos.length > 0) {
+                    document.getElementById('mainImage').innerHTML = `
+                        <img src="/uploads/${item.photos[0]}" alt="${item.title}" class="w-full h-full object-cover">
+                    `;
+
+                    document.getElementById('thumbnails').innerHTML = item.photos.map((photo, index) => `
+                        <button onclick="updateMainImage(${index})" class="w-full h-24 bg-gray-100 rounded-lg overflow-hidden">
+                            <img src="/uploads/${photo}" alt="${item.title}" class="w-full h-full object-cover">
+                        </button>
+                    `).join('');
+                } else {
+                    document.getElementById('mainImage').innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-6xl"></i>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading item:', error);
+            }
+        }
+
+        // Update main image when clicking thumbnails
+        function updateMainImage(index) {
+            document.getElementById('mainImage').innerHTML = `
+                <img src="/uploads/${item.photos[index]}" alt="${item.title}" class="w-full h-full object-cover">
+            `;
+        }
+
+        // Handle rent button click
+        document.getElementById('rentButton').addEventListener('click', async () => {
+            const startDate = document.getElementById('rentStartDate').value;
+            const endDate = document.getElementById('rentEndDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Please select rental dates');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/rentals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        itemId,
+                        startDate,
+                        endDate
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Rental request submitted successfully!');
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    alert(data.message || 'Failed to submit rental request');
+                }
+            } catch (error) {
+                console.error('Error submitting rental:', error);
+                alert('Failed to submit rental request');
+            }
+        });
+
+        // Load item when page loads
+        loadItem();
+    </script>
+</body>
+</html> 

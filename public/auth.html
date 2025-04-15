@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - University Rentals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow">
+        <h1 class="text-2xl font-bold text-center mb-8">University Rentals</h1>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Login</h2>
+            <form id="loginFormElement">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="w-full p-2 border rounded" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Login
+                </button>
+            </form>
+            <p class="text-center mt-4">
+                <button id="showRegister" class="text-blue-500 hover:text-blue-700">Create an account</button>
+            </p>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" class="hidden">
+            <h2 class="text-xl font-semibold mb-4">Register</h2>
+            <form id="registerFormElement">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="registerName">Name</label>
+                    <input type="text" id="registerName" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" class="w-full p-2 border rounded" required>
+                </div>
+                <button type="submit" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Register
+                </button>
+            </form>
+            <p class="text-center mt-4">
+                <button id="showLogin" class="text-blue-500 hover:text-blue-700">Already have an account?</button>
+            </p>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html> 

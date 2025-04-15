@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Items - University Rentals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold">University Rentals</h1>
+                </div>
+                <div class="flex items-center">
+                    <button id="logoutBtn" class="text-red-500 hover:text-red-700">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Item Form -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-2xl font-bold mb-4">List an Item</h2>
+            <form id="itemForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="title">Title</label>
+                    <input type="text" id="title" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="description">Description</label>
+                    <textarea id="description" class="w-full p-2 border rounded" required></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="price">Price ($)</label>
+                    <input type="number" id="price" class="w-full p-2 border rounded" required>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    List Item
+                </button>
+            </form>
+        </div>
+
+        <!-- Items List -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4">Available Items</h2>
+            <div id="itemsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Items will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="list.js"></script>
+</body>
+</html> 

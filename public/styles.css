@@ -1,0 +1,63 @@
+/* Custom styles */
+.item-card {
+    transition: transform 0.2s;
+}
+
+.item-card:hover {
+    transform: translateY(-2px);
+}
+
+#itemsList {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* Custom scrollbar */
+#itemsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#itemsList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#itemsList::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#itemsList::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Form styles */
+input[type="text"],
+input[type="number"],
+textarea {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Loading animation */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+} 

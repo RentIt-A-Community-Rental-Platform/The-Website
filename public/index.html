@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Rental Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Auth Forms -->
+        <div id="authForms" class="mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Login Form -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-2xl font-bold mb-4">Login</h2>
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2" for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" class="w-full p-2 border rounded" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2" for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" class="w-full p-2 border rounded" required>
+                        </div>
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            Login
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Register Form -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-2xl font-bold mb-4">Register</h2>
+                    <form id="registerForm">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2" for="registerName">Name</label>
+                            <input type="text" id="registerName" class="w-full p-2 border rounded" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2" for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" class="w-full p-2 border rounded" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2" for="registerPassword">Password</label>
+                            <input type="password" id="registerPassword" class="w-full p-2 border rounded" required>
+                        </div>
+                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                            Register
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div id="userInfo" class="hidden bg-white p-6 rounded-lg shadow mb-8">
+            <div class="flex items-center">
+                <img id="userPicture" src="" alt="User" class="w-12 h-12 rounded-full mr-4">
+                <div>
+                    <h2 id="userName" class="text-xl font-bold"></h2>
+                    <p id="userEmail" class="text-gray-600"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Form -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-2xl font-bold mb-4">List an Item</h2>
+            <form id="itemForm">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="title">Title</label>
+                    <input type="text" id="title" class="w-full p-2 border rounded" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="description">Description</label>
+                    <textarea id="description" class="w-full p-2 border rounded" required></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="price">Price ($)</label>
+                    <input type="number" id="price" class="w-full p-2 border rounded" required>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    List Item
+                </button>
+            </form>
+        </div>
+
+        <!-- Items List -->
+        <div id="itemsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Items will be displayed here -->
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 

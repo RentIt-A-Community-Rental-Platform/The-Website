@@ -11,8 +11,37 @@ const userName = document.getElementById('userName');
 const userEmail = document.getElementById('userEmail');
 const itemForm = document.getElementById('itemForm');
 const itemsList = document.getElementById('itemsList');
+const searchInput = document.querySelector('input[type="text"]');
+const searchButton = document.querySelector('button');
+const startDate = document.querySelector('input[type="date"]:first-of-type');
+const endDate = document.querySelector('input[type="date"]:last-of-type');
+const featuredItemsContainer = document.getElementById('featuredItems');
 
 console.log('🔍 DOM Elements loaded');
+
+// Set min dates for date inputs
+const today = new Date().toISOString().split('T')[0];
+startDate.min = today;
+endDate.min = today;
+
+// Handle date selection
+startDate.addEventListener('change', (e) => {
+    endDate.min = e.target.value;
+    if (endDate.value && endDate.value < e.target.value) {
+        endDate.value = e.target.value;
+    }
+});
+
+// Handle search
+searchButton.addEventListener('click', () => {
+    const searchTerm = searchInput.value;
+    const start = startDate.value;
+    const end = endDate.value;
+    
+    if (searchTerm) {
+        window.location.href = `/list.html?search=${encodeURIComponent(searchTerm)}&start=${start}&end=${end}`;
+    }
+});
 
 // Register new user
 registerForm.addEventListener('submit', async (e) => {
@@ -144,23 +173,74 @@ async function loadItems() {
     }
 }
 
-// Check if user is already logged in
-const token = localStorage.getItem('token');
-if (token) {
-    console.log('🔄 Verifying existing token...');
-    fetch(`${API_URL}/auth/me`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
+// Load featured items
+async function loadFeaturedItems() {
+    try {
+        const response = await fetch(`${API_URL}/items`);
+        const items = await response.json();
+        
+        if (!Array.isArray(items)) {
+            console.error('Invalid items data received');
+            return;
         }
-    })
-    .then(response => response.json())
-    .then(user => {
-        console.log('✅ Token valid, user data:', user);
-        displayUserInfo(user);
-        loadItems();
-    })
-    .catch(() => {
-        console.error('❌ Token verification failed, removing token');
-        localStorage.removeItem('token');
-    });
-} 
+
+        // Display only the first 8 items
+        const featuredItems = items.slice(0, 8);
+        
+        featuredItemsContainer.innerHTML = featuredItems.map(item => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <img src="${item.imageUrl || 'https://via.placeholder.com/300x200'}" alt="${item.title}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-lg mb-2">${item.title}</h3>
+                    <p class="text-gray-600 text-sm mb-2">${item.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-primary-600 font-bold">$${item.price}/day</span>
+                        <button onclick="window.location.href='/item.html?id=${item._id}'" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading featured items:', error);
+        featuredItemsContainer.innerHTML = '<p class="text-center text-gray-500">Failed to load items</p>';
+    }
+}
+
+// Check if user is logged in
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (token) {
+        fetch(`${API_URL}/auth/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.user) {
+                // Update navigation
+                const authButtons = document.querySelector('.flex.items-center.space-x-4');
+                authButtons.innerHTML = `
+                    <span class="text-gray-600">${data.user.name}</span>
+                    <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
+                    <button onclick="logout()" class="text-gray-600 hover:text-gray-900">Logout</button>
+                `;
+            }
+        })
+        .catch(() => {
+            localStorage.removeItem('token');
+        });
+    }
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('token');
+    window.location.reload();
+}
+
+// Initialize
+loadFeaturedItems();
+checkAuth(); 

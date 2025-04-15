@@ -182,12 +182,12 @@
                 // Update images
                 if (item.photos && item.photos.length > 0) {
                     document.getElementById('mainImage').innerHTML = `
-                        <img src="/uploads/${item.photos[0]}" alt="${item.title}" class="w-full h-full object-cover">
+                        <img src="${item.photos[0]}" alt="${item.title}" class="w-full h-full object-cover">
                     `;
 
                     document.getElementById('thumbnails').innerHTML = item.photos.map((photo, index) => `
                         <button onclick="updateMainImage(${index})" class="w-full h-24 bg-gray-100 rounded-lg overflow-hidden">
-                            <img src="/uploads/${photo}" alt="${item.title}" class="w-full h-full object-cover">
+                            <img src="${photo}" alt="${item.title}" class="w-full h-full object-cover">
                         </button>
                     `).join('');
                 } else {
@@ -205,7 +205,7 @@
         // Update main image when clicking thumbnails
         function updateMainImage(index) {
             document.getElementById('mainImage').innerHTML = `
-                <img src="/uploads/${item.photos[index]}" alt="${item.title}" class="w-full h-full object-cover">
+                <img src="${item.photos[index]}" alt="${item.title}" class="w-full h-full object-cover">
             `;
         }
 

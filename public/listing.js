@@ -93,7 +93,7 @@ async function analyzeImageWithGemini(imageFile) {
             };
             reader.readAsDataURL(imageFile);
         });
-
+        console.log(GEMINI_API_KEY)
         const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent', {
             method: 'POST',
             headers: {
@@ -145,6 +145,26 @@ async function analyzeImageWithGemini(imageFile) {
     }
 }
 
+async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'rentit_preset'); // Replace with your actual preset
+    
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    });
+  
+    if (!response.ok) {
+      throw new Error('Cloudinary upload failed');
+    }
+  
+    const data = await response.json();
+    return data.secure_url;
+  }
+
+  
 // Update handleFiles function to include image analysis
 function handleFiles(e) {
     const files = [...e.target.files];
@@ -206,66 +226,47 @@ nextBtn.addEventListener('click', () => {
 
 submitBtn.addEventListener('click', async () => {
     try {
-        console.log('Starting listing submission...');
-        
-        // Create a regular object for the item data
-        const itemData = {
-            title: formData.title,
-            description: formData.description,
-            price: parseFloat(formData.price),
-            category: formData.category,
-            deposit: parseFloat(formData.deposit)
-        };
-
-        console.log('Sending data:', itemData);
-
-        const response = await fetch(`${API_URL}/items`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${DUMMY_TOKEN}` // Always use dummy token
-            },
-            body: JSON.stringify(itemData)
-        });
-
-        console.log('Response status:', response.status);
-        
-        if (response.ok) {
-            console.log('Listing created successfully');
-            
-            // Handle photo uploads separately if needed
-            if (formData.photos.length > 0) {
-                const photoData = new FormData();
-                formData.photos.forEach((photo, index) => {
-                    photoData.append('photos', photo);
-                });
-                
-                // Upload photos
-                const photoResponse = await fetch(`${API_URL}/items/${response.id}/photos`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${DUMMY_TOKEN}` // Always use dummy token
-                    },
-                    body: photoData
-                });
-                
-                if (!photoResponse.ok) {
-                    console.warn('Failed to upload photos:', await photoResponse.text());
-                }
-            }
-            
-            alert('Listing created successfully!');
-            window.location.href = '/';
-        } else {
-            const errorData = await response.text();
-            console.error('Server responded with error:', errorData);
-            throw new Error(errorData || 'Failed to create listing');
-        }
-    } catch (error) {
-        console.error('Error creating listing:', error);
-        alert(`Failed to create listing: ${error.message}`);
+      console.log('Uploading photos to Cloudinary...');
+      const photoUrls = [];
+  
+      for (const file of formData.photos) {
+        const url = await uploadToCloudinary(file);
+        photoUrls.push(url);
+      }
+  
+      const itemData = {
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        category: formData.category,
+        deposit: parseFloat(formData.deposit),
+        photos: photoUrls
+      };
+  
+      const response = await fetch(`${API_URL}/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DUMMY_TOKEN}`
+        },
+        body: JSON.stringify(itemData)
+      });
+  
+      if (response.ok) {
+        console.log('Listing created successfully');
+        alert('Listing created successfully!');
+        window.location.href = '/';
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+    } catch (err) {
+      console.error('Upload or submission failed:', err);
+      alert(`Error: ${err.message}`);
     }
-});
+  });
+  
+
 
 function goToStep(step) {
     // Update current step

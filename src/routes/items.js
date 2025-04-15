@@ -42,23 +42,25 @@ router.get('/', async (req, res) => {
 });
 
 // Create new item - no auth check
-router.post('/', upload.array('photos', 5), async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         console.log('Received item data:', req.body);
-        
-        const { title, description, price, category, deposit } = req.body;
-        
-        // Create item with dummy user
+
+        const { title, description, price, category, deposit, photos } = req.body;
+
+        // Parse the photos if needed (in case it's sent as a stringified array)
+        const parsedPhotos = typeof photos === 'string' ? JSON.parse(photos) : photos;
+
         const item = new Item({
             title,
             description,
             price: parseFloat(price),
             category,
             deposit: parseFloat(deposit),
-            userId: '123', // Dummy user ID
-            photos: req.files ? req.files.map(file => file.filename) : []
+            userId: '123',
+            photos: parsedPhotos || []
         });
-        
+
         await item.save();
         console.log('Item created successfully:', item);
         res.status(201).json(item);
@@ -67,6 +69,7 @@ router.post('/', upload.array('photos', 5), async (req, res) => {
         res.status(400).json({ error: 'Failed to create item' });
     }
 });
+
 
 // Get item by ID
 router.get('/:id', async (req, res) => {

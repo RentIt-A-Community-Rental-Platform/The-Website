@@ -145,25 +145,32 @@ async function analyzeImageWithGemini(imageFile) {
     }
 }
 
+async function compressImage(file) {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true
+    };
+    return await window.imageCompression(file, options);
+  }
+
 async function uploadToCloudinary(file) {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'rentit_preset'); // Replace with your actual preset
-    
-
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    formData.append('image', file);
+  
+    const response = await fetch(`${API_URL}/api/upload-image`, {
       method: 'POST',
       body: formData
     });
   
     if (!response.ok) {
-      throw new Error('Cloudinary upload failed');
+      throw new Error('Upload failed');
     }
   
     const data = await response.json();
     return data.secure_url;
   }
-
+  
   
 // Update handleFiles function to include image analysis
 function handleFiles(e) {
@@ -227,12 +234,18 @@ nextBtn.addEventListener('click', () => {
 submitBtn.addEventListener('click', async () => {
     try {
       console.log('Uploading photos to Cloudinary...');
-      const photoUrls = [];
-  
+    //   const photoUrls = [];
+      
+      /*
       for (const file of formData.photos) {
-        const url = await uploadToCloudinary(file);
+        const compressed = await compressImage(file);
+        const url = await uploadToCloudinary(compressed);
+        // const url = await uploadToCloudinary(file);
         photoUrls.push(url);
-      }
+      }*/
+      const photoUploadPromises = formData.photos.map(file => compressImage(file).then(uploadToCloudinary));
+      const photoUrls = await Promise.all(photoUploadPromises);
+        
   
       const itemData = {
         title: formData.title,

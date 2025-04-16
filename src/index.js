@@ -8,6 +8,7 @@ import multer from 'multer';
 import { itemRoutes } from './routes/items.js';
 import { setupGemini } from './utils/gemini.js';
 import { authRoutes } from './routes/auth.js';
+import cloudinaryUpload from './routes/cloudinaryUpload.js';
 import { mkdirSync } from 'fs';
 
 dotenv.config();
@@ -56,6 +57,7 @@ setupGemini();
 // Routes
 app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
+app.use('/api', cloudinaryUpload); // /api/upload-image
 
 // Create uploads directory if it doesn't exist
 try {

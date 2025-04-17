@@ -1,5 +1,5 @@
 import express from 'express';
-import passport from 'passport';
+import passport from '../config/passport.js';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import bcrypt from 'bcryptjs';
@@ -84,6 +84,17 @@ router.get('/me', (req, res) => {
     }
     res.status(401).json({ error: 'Not authenticated' });
 });
+
+// Google OAuth flow
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get(
+    '/google/callback',
+    passport.authenticate('google', { failureRedirect: '/auth.html' }),
+    (req, res) => {
+      res.redirect('/dashboard');
+    }
+);
 
 // Logout
 router.post('/logout', (req, res) => {

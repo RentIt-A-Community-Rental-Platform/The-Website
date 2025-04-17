@@ -3,6 +3,7 @@ import multer from 'multer';
 import { Item } from '../models/Item.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { isAuthenticated } from './auth.js'; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,12 +42,16 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Create new item - no auth check
-router.post('/', async (req, res) => {
+// Create new item with authentication
+router.post('/', isAuthenticated, async (req, res) => {
     try {
         console.log('Received item data:', req.body);
 
         const { title, description, price, category, deposit, photos } = req.body;
+        
+        // Get the authenticated user information
+        const userId = req.user._id;
+        const userName = req.user.name || 'Unknown User';
 
         // Parse the photos if needed (in case it's sent as a stringified array)
         const parsedPhotos = typeof photos === 'string' ? JSON.parse(photos) : photos;
@@ -57,12 +62,13 @@ router.post('/', async (req, res) => {
             price: parseFloat(price),
             category,
             deposit: parseFloat(deposit),
-            userId: '123',
+            userId: userId,
+            userName: userName,  // Add the user's name
             photos: parsedPhotos || []
         });
 
         await item.save();
-        console.log('Item created successfully:', item);
+        console.log('Item created successfully by user:', userName);
         res.status(201).json(item);
     } catch (error) {
         console.error('Error creating item:', error);

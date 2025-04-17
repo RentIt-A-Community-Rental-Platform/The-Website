@@ -61,7 +61,21 @@
                 <!-- Auth Buttons -->
                 <div class="flex items-center space-x-4">
                     <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
-                    <a href="/auth.html" class="text-gray-600 hover:text-gray-900">Login</a>
+                    
+                    <!-- User icon for logged in users (hidden by default) -->
+                    <div id="userIconContainer" class="hidden relative">
+                        <button id="userMenuButton" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
+                            <i class="fas fa-user text-gray-600"></i>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <div id="userDisplayName" class="px-4 py-2 text-sm text-gray-700 border-b"></div>
+                            <a href="/list.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Listings</a>
+                            <button id="logoutBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Login link for logged out users -->
+                    <a href="/auth.html" id="loginLink" class="text-gray-600 hover:text-gray-900">Login</a>
                 </div>
             </div>
         </div>
@@ -236,8 +250,119 @@
             displayItems(filteredItems);
         });
 
-        // Load items when page loads
-        loadItems();
+        // Replace the existing checkAuth function
+        function checkAuth() {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            fetch(`${API_URL}/auth/status`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const userIconContainer = document.getElementById('userIconContainer');
+                const loginLink = document.getElementById('loginLink');
+                const userDisplayName = document.getElementById('userDisplayName');
+                
+                if (data.isAuthenticated) {
+                    // User is logged in
+                    userIconContainer.classList.remove('hidden');
+                    loginLink.classList.add('hidden');
+                    
+                    // Display user name
+                    userDisplayName.textContent = data.user.name || data.user.email || 'User';
+                    
+                    if (data.user) {
+                        // Store updated user info
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                } else {
+                    // User is not logged in
+                    userIconContainer.classList.add('hidden');
+                    loginLink.classList.remove('hidden');
+                    
+                    // Clear any stale user data
+                    sessionStorage.removeItem('user');
+                }
+            })
+            .catch(error => {
+                console.error('Auth check error:', error);
+                // Handle as not authenticated in case of error
+                document.getElementById('userIconContainer').classList.add('hidden');
+                document.getElementById('loginLink').classList.remove('hidden');
+            });
+        }
+
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const userIconContainer = document.getElementById('userIconContainer');
+            const loginLink = document.getElementById('loginLink');
+            const userDisplayName = document.getElementById('userDisplayName');
+            
+            if (token) {
+                // User is logged in
+                userIconContainer.classList.remove('hidden');
+                loginLink.classList.add('hidden');
+                
+                // Get and display user name if available
+                const userData = sessionStorage.getItem('user');
+                if (userData) {
+                    try {
+                        const user = JSON.parse(userData);
+                        userDisplayName.textContent = user.name || user.email || 'User';
+                    } catch (e) {
+                        userDisplayName.textContent = 'User';
+                    }
+                } else {
+                    userDisplayName.textContent = 'User';
+                }
+        } else {
+            // User is not logged in
+            userIconContainer.classList.add('hidden');
+            loginLink.classList.remove('hidden');
+        }
+
+        // Setup user dropdown functionality
+        function setupUserDropdown() {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            userMenuButton?.addEventListener('click', function() {
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', function(event) {
+                if (userMenuButton && !userMenuButton.contains(event.target) && 
+                    userDropdown && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Setup logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            logoutBtn?.addEventListener('click', function() {
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                window.location.reload();
+            });
+        }
+
+        // Run when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadItems();
+            checkAuth();
+            setupUserDropdown();
+            
+            // Set first category (All) as active by default
+            const allCategoryBtn = document.querySelector('.category-btn[data-category="all"]');
+            if (allCategoryBtn) {
+                allCategoryBtn.querySelector('div').classList.add('bg-primary-100');
+                allCategoryBtn.querySelector('i').classList.add('text-primary-500');
+                allCategoryBtn.querySelector('span').classList.add('text-primary-500');
+            }
+        });
     </script>
 </body>
-</html> 
+</html>

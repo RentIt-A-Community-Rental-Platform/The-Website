@@ -109,13 +109,13 @@ app.get('/dashboard', (req, res) => {
 app.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/auth.html' }),
   (req, res) => {
-    res.redirect('/dashboard');
+    res.redirect('/');
   }
 );
 */
 
 // Fallback to login page for root URL
-app.get('/', (req, res) => res.redirect('/auth.html'));
+app.get('/dashboard', (req, res) => res.redirect('/auth.html'));
 
 // 404 handler
 app.use((req, res, next) => {

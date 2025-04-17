@@ -6,7 +6,8 @@ const itemSchema = new mongoose.Schema({
     price: Number,
     category: String,
     deposit: Number,
-    userId: String,
+    userId: { type: String, required: true },
+    userName: { type: String, default: 'Unknown User' },
     photos: [String],
     createdAt: {
         type: Date,

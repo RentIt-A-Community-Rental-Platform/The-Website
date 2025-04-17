@@ -2,16 +2,16 @@
 const API_URL = 'http://localhost:3000';
 
 // Bypass authentication - set dummy user data
-const DUMMY_USER = {
-    id: '123',
-    email: 'test@test.com',
-    name: 'Test User'
-};
-const DUMMY_TOKEN = 'dummy-token-123';
+// const DUMMY_USER = {
+//     id: '123',
+//     email: 'test@test.com',
+//     name: 'Test User'
+// };
+// const DUMMY_TOKEN = 'dummy-token-123';
 
-// Store dummy auth data
-sessionStorage.setItem('token', DUMMY_TOKEN);
-sessionStorage.setItem('user', JSON.stringify(DUMMY_USER));
+// // Store dummy auth data
+// sessionStorage.setItem('token', DUMMY_TOKEN);
+// sessionStorage.setItem('user', JSON.stringify(DUMMY_USER));
 
 // State management
 let currentStep = 1;
@@ -241,53 +241,55 @@ nextBtn.addEventListener('click', () => {
 });
 
 submitBtn.addEventListener('click', async () => {
-    try {
-      console.log('Uploading photos to Cloudinary...');
-    //   const photoUrls = [];
+  try {
+    console.log('Uploading photos to Cloudinary...');
+    
+    const photoUploadPromises = formData.photos.map(file => compressImage(file).then(uploadToCloudinary));
+    const photoUrls = await Promise.all(photoUploadPromises);
       
-      /*
-      for (const file of formData.photos) {
-        const compressed = await compressImage(file);
-        const url = await uploadToCloudinary(compressed);
-        // const url = await uploadToCloudinary(file);
-        photoUrls.push(url);
-      }*/
-      const photoUploadPromises = formData.photos.map(file => compressImage(file).then(uploadToCloudinary));
-      const photoUrls = await Promise.all(photoUploadPromises);
-        
-  
-      const itemData = {
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        category: formData.category,
-        deposit: parseFloat(formData.deposit),
-        photos: photoUrls
-      };
-  
-      const response = await fetch(`${API_URL}/items`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DUMMY_TOKEN}`
-        },
-        body: JSON.stringify(itemData)
-      });
-  
-      if (response.ok) {
-        console.log('Listing created successfully');
-        alert('Listing created successfully!');
-        window.location.href = '/';
-      } else {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-    } catch (err) {
-      console.error('Upload or submission failed:', err);
-      alert(`Error: ${err.message}`);
+    const itemData = {
+      title: formData.title,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      category: formData.category,
+      deposit: parseFloat(formData.deposit),
+      photos: photoUrls
+    };
+
+    // Get actual token from session storage
+    const token = sessionStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Not authenticated');
     }
-  });
-  
+
+    const response = await fetch(`${API_URL}/items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(itemData)
+    });
+
+    if (response.ok) {
+      console.log('Listing created successfully');
+      alert('Listing created successfully!');
+      window.location.href = '/';
+    } else {
+      const errorText = await response.text();
+      throw new Error(errorText);
+    }
+  } catch (err) {
+    console.error('Upload or submission failed:', err);
+    alert(`Error: ${err.message}`);
+    
+    // Redirect to login if authentication error
+    if (err.message === 'Not authenticated') {
+      window.location.href = '/auth.html?redirect=listing.html';
+    }
+  }
+});
 
 
 function goToStep(step) {

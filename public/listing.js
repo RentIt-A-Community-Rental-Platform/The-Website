@@ -83,67 +83,69 @@ function handleDrop(e) {
 }
 
 async function analyzeImageWithGemini(imageFile) {
+    const overlay = document.getElementById('aiLoadingOverlay');
     try {
-        // Convert image file to base64
-        const base64Image = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const base64 = reader.result.split(',')[1];
-                resolve(base64);
-            };
-            reader.readAsDataURL(imageFile);
-        });
-        console.log(GEMINI_API_KEY)
-        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GEMINI_API_KEY}`
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: "Analyze this image and provide a JSON response with the following fields: title (a concise item title), description (detailed item description), suggestedPrice (suggested daily rental price in USD). Focus on the main item in the image and its rental potential."
-                    }, {
-                        inline_data: {
-                            mime_type: "image/jpeg",
-                            data: base64Image
-                        }
-                    }]
-                }]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to analyze image');
+      overlay.classList.remove('hidden'); // 👈 show overlay
+  
+      const base64Image = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1];
+          resolve(base64);
+        };
+        reader.readAsDataURL(imageFile);
+      });
+  
+      const response = await fetch(`${API_URL}/api/gemini/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64Image })
+      });
+  
+      if (!response.ok) throw new Error('Failed to analyze image');
+  
+      const analysisResult = await response.json();
+  
+      // Fill out the form
+      document.getElementById('title').value = analysisResult.title;
+      document.getElementById('description').value = analysisResult.description;
+      document.getElementById('price').value = analysisResult.suggestedPrice;
+      document.getElementById('deposit').value = Math.round(analysisResult.suggestedPrice * 5);
+  
+      formData.title = analysisResult.title;
+      formData.description = analysisResult.description;
+      formData.price = analysisResult.suggestedPrice;
+      formData.deposit = Math.round(analysisResult.suggestedPrice * 5);
+  
+      // Set category in dropdown
+      const categoryDropdown = document.getElementById('category');
+      const options = Array.from(categoryDropdown.options);
+      let matchFound = false;
+  
+      options.forEach(option => {
+        if (option.value.toLowerCase() === analysisResult.category.toLowerCase()) {
+          option.selected = true;
+          formData.category = option.value;
+          matchFound = true;
         }
-
-        const data = await response.json();
-        const analysisText = data.candidates[0].content.parts[0].text;
-        
-        // Parse the JSON response from the text
-        const analysisResult = JSON.parse(analysisText);
-        
-        // Auto-fill the form
-        document.getElementById('title').value = analysisResult.title;
-        document.getElementById('description').value = analysisResult.description;
-        document.getElementById('price').value = analysisResult.suggestedPrice;
-        document.getElementById('deposit').value = Math.round(analysisResult.suggestedPrice * 5); // Set deposit as 5x daily rate
-        
-        // Update formData
-        formData.title = analysisResult.title;
-        formData.description = analysisResult.description;
-        formData.price = analysisResult.suggestedPrice;
-        formData.deposit = Math.round(analysisResult.suggestedPrice * 5);
-        
-        // Enable next button since we've filled the form
-        nextBtn.disabled = false;
-        
+      });
+  
+      if (!matchFound) {
+        categoryDropdown.value = 'Other';
+        formData.category = 'Other';
+      }
+  
+      // Hide overlay and move to next step
+      overlay.classList.add('hidden');
+      goToStep(2); // 👈 jump to Item Details step (adjust if different)
+  
     } catch (error) {
-        console.error('Error analyzing image:', error);
-        alert('Failed to analyze image. Please fill in the details manually.');
+      overlay.classList.add('hidden');
+      console.error('Error analyzing image:', error);
+      alert('Failed to analyze image. Please fill in the details manually.');
     }
-}
+  }
+  
 
 async function compressImage(file) {
     const options = {
@@ -170,53 +172,60 @@ async function uploadToCloudinary(file) {
     const data = await response.json();
     return data.secure_url;
   }
-  
-  
-// Update handleFiles function to include image analysis
-function handleFiles(e) {
+
+  function handleFiles(e) {
     const files = [...e.target.files];
     uploadedPhotos = files;
     formData.photos = files;
-    
-    // Clear preview container
+  
     previewContainer.innerHTML = '';
-    
-    // Preview images and analyze the first image
+  
+    const itemDetailsImage = document.getElementById('itemDetailsImage');
+    const itemDetailsPreview = document.getElementById('itemDetailsPreview');
+  
     files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.createElement('div');
-            preview.className = 'relative';
-            preview.innerHTML = `
-                <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg">
-                <button class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            previewContainer.appendChild(preview);
-            
-            // Analyze first image only
-            if (index === 0) {
-                analyzeImageWithGemini(file);
-            }
-        };
-        reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const imageUrl = e.target.result;
+  
+        // Show preview in dropzone area
+        const preview = document.createElement('div');
+        preview.className = 'relative';
+        preview.innerHTML = `
+          <img src="${imageUrl}" class="w-full h-32 object-cover rounded-lg">
+          <button class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+        previewContainer.appendChild(preview);
+  
+        // Set the image in Item Details view
+        if (index === 0) {
+          itemDetailsImage.src = imageUrl;
+          itemDetailsPreview.classList.remove('hidden');
+          analyzeImageWithGemini(file); // run AI analysis
+        }
+      };
+      reader.readAsDataURL(file);
     });
-
+  
     nextBtn.disabled = files.length === 0;
-}
+  }
+  
 
 // Form handling
 document.getElementById('itemDetailsForm').addEventListener('input', (e) => {
     formData[e.target.id] = e.target.value;
     const isFormValid = validateForm();
     nextBtn.disabled = !isFormValid;
-});
+  });
+  
 
-function validateForm() {
-    const { title, description, price, deposit } = formData;
-    return title && description && price && deposit;
-}
+  function validateForm() {
+    const { title, description, price, deposit, category } = formData;
+    return title && description && price && deposit && category;
+  }
+  
 
 // Navigation
 prevBtn.addEventListener('click', () => {
@@ -226,7 +235,7 @@ prevBtn.addEventListener('click', () => {
 });
 
 nextBtn.addEventListener('click', () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
         goToStep(currentStep + 1);
     }
 });
@@ -286,7 +295,7 @@ function goToStep(step) {
     currentStep = step;
     
     // Update progress bar
-    progressBar.style.width = `${(step - 1) * 33.33}%`;
+    progressBar.style.width = `${(step) * 33.33}%`;
     
     // Update step indicators
     stepIndicators.forEach((indicator, index) => {
@@ -313,11 +322,12 @@ function goToStep(step) {
     
     // Update navigation buttons
     prevBtn.classList.toggle('hidden', step === 1);
-    nextBtn.classList.toggle('hidden', step === 4);
-    submitBtn.classList.toggle('hidden', step !== 4);
+    nextBtn.classList.toggle('hidden', step === 3);
+    submitBtn.classList.toggle('hidden', step !== 3);
+    
     
     // Update review content if on last step
-    if (step === 4) {
+    if (step === 3) {
         updateReview();
     }
 }

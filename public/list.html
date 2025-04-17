@@ -51,18 +51,98 @@
         <!-- Progress Bar -->
         <div class="mb-8">
             <div class="flex justify-between mb-2">
-                <span class="text-primary-600 font-medium step-indicator active" data-step="1">Choose Category</span>
-                <span class="text-gray-400 font-medium step-indicator" data-step="2">Upload Photo</span>
-                <span class="text-gray-400 font-medium step-indicator" data-step="3">Item Details</span>
-                <span class="text-gray-400 font-medium step-indicator" data-step="4">Review & Post</span>
+                <span class="text-primary-600 font-medium step-indicator active" data-step="1">Upload Photo</span>
+                <span class="text-gray-400 font-medium step-indicator" data-step="2">Item Details</span>
+                <!-- <span class="text-gray-400 font-medium step-indicator" data-step="3">Choose Category</span> -->
+                <span class="text-gray-400 font-medium step-indicator" data-step="3">Review & Post</span>
             </div>
             <div class="h-2 bg-gray-200 rounded-full">
                 <div class="h-full w-1/4 bg-primary-500 rounded-full transition-all duration-300" id="progressBar"></div>
             </div>
         </div>
 
-        <!-- Step 1: Category Selection -->
+        
+
+        <!-- Step 1: Photo Upload -->
         <div class="step-content" id="step1">
+            <h2 class="text-2xl font-semibold mb-6">Upload Photos</h2>
+            <div class="bg-white p-8 rounded-lg shadow">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center" id="dropZone">
+                    <input type="file" id="photoInput" class="hidden" accept="image/*" multiple>
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-2">Drag and drop your photos here</p>
+                    <p class="text-gray-400 text-sm mb-4">or</p>
+                    <button type="button" class="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600" onclick="document.getElementById('photoInput').click()">
+                        Choose Photos
+                    </button>
+                </div>
+                <div id="previewContainer" class="grid grid-cols-3 gap-4 mt-6"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Item Details -->
+        <div class="step-content hidden" id="step2">
+            <h2 class="text-2xl font-semibold mb-6">Item Details</h2>
+            <div class="bg-white p-8 rounded-lg shadow">
+                <div id="itemDetailsPreview" class="mb-6 hidden">
+                    <h3 class="text-gray-700 font-semibold mb-2">Preview</h3>
+                    <img id="itemDetailsImage" src="" alt="Uploaded item preview" class="w-full max-h-64 object-cover rounded-lg shadow">
+                </div>
+
+                <form id="itemDetailsForm">
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="title">
+                            Title
+                        </label>
+                        <input type="text" id="title" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="mb-6">
+                        <label for="category" class="block text-gray-700 text-sm font-bold mb-2">
+                            Category
+                        </label>
+                        <select id="category" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">Select a category</option>
+                            <option value="Party & Events">Party & Events</option>
+                            <option value="Gaming">Gaming</option>
+                            <option value="Photography">Photography</option>
+                            <option value="Music">Music</option>
+                            <option value="Clothing">Clothing</option>
+                            <option value="Kitchen">Kitchen</option>
+                            <option value="Books">Books</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Sports">Sports</option>
+                            <option value="Tools">Tools</option>
+                            <option value="Art">Art</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                      
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
+                            Description
+                        </label>
+                        <textarea id="description" rows="4" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="price">
+                                Daily Rate ($)
+                            </label>
+                            <input type="number" id="price" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="deposit">
+                                Security Deposit ($)
+                            </label>
+                            <input type="number" id="deposit" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 3: Category Selection
+        <div class="step-content hidden" id="step3">
             <h2 class="text-2xl font-semibold mb-6">What are you renting out?</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button class="category-btn bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow text-center" data-category="Party & Events">
@@ -149,62 +229,10 @@
                     <span class="font-medium">Other</span>
                 </button>
             </div>
-        </div>
+        </div> -->
 
-        <!-- Step 2: Photo Upload -->
-        <div class="step-content hidden" id="step2">
-            <h2 class="text-2xl font-semibold mb-6">Upload Photos</h2>
-            <div class="bg-white p-8 rounded-lg shadow">
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center" id="dropZone">
-                    <input type="file" id="photoInput" class="hidden" accept="image/*" multiple>
-                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-                    <p class="text-gray-600 mb-2">Drag and drop your photos here</p>
-                    <p class="text-gray-400 text-sm mb-4">or</p>
-                    <button type="button" class="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600" onclick="document.getElementById('photoInput').click()">
-                        Choose Photos
-                    </button>
-                </div>
-                <div id="previewContainer" class="grid grid-cols-3 gap-4 mt-6"></div>
-            </div>
-        </div>
-
-        <!-- Step 3: Item Details -->
+        <!-- Step 2: Review -->
         <div class="step-content hidden" id="step3">
-            <h2 class="text-2xl font-semibold mb-6">Item Details</h2>
-            <div class="bg-white p-8 rounded-lg shadow">
-                <form id="itemDetailsForm">
-                    <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="title">
-                            Title
-                        </label>
-                        <input type="text" id="title" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
-                            Description
-                        </label>
-                        <textarea id="description" rows="4" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="price">
-                                Daily Rate ($)
-                            </label>
-                            <input type="number" id="price" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        </div>
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="deposit">
-                                Security Deposit ($)
-                            </label>
-                            <input type="number" id="deposit" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Step 4: Review -->
-        <div class="step-content hidden" id="step4">
             <h2 class="text-2xl font-semibold mb-6">Review Your Listing</h2>
             <div class="bg-white p-8 rounded-lg shadow">
                 <div class="grid grid-cols-2 gap-8">
@@ -253,6 +281,14 @@
         </div>
     </div>
 
+    <!-- AI Loading Screen -->
+    <div id="aiLoadingOverlay" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center hidden">
+        <div class="text-center">
+        <i class="fas fa-magic text-4xl text-primary-600 animate-pulse mb-4"></i>
+        <p class="text-xl font-semibold text-primary-700">Generating listing details using AI...</p>
+        <p class="text-gray-500 mt-2">This may take a few seconds.</p>
+        </div>
+    </div>
     <script src="listing.js"></script>
 </body>
 </html> 

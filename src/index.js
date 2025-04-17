@@ -8,9 +8,10 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import multer from 'multer';
 import { itemRoutes } from './routes/items.js';
-import { setupGemini } from './utils/gemini.js';
+// import { setupGemini } from './utils/gemini.js';
 import { authRoutes } from './routes/auth.js';
 import cloudinaryUpload from './routes/cloudinaryUpload.js';
+import geminiRoutes from './routes/geminiRoutes.js';
 import { mkdirSync } from 'fs';
 
 // Load environment variables
@@ -25,8 +26,9 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 app.use(express.static('public'));
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
@@ -72,7 +74,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rentit')
   });
 
 // Initialize Gemini
-setupGemini();
+// setupGemini();
 
 // Ensure uploads directory exists
 try {
@@ -86,6 +88,7 @@ try {
 app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
 app.use('/api', cloudinaryUpload); // /api/upload-image
+app.use('/api/gemini', geminiRoutes); //api for gemini
 
 // Protected dashboard example
 app.get('/dashboard', (req, res) => {

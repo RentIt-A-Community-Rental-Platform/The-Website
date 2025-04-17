@@ -256,18 +256,17 @@ submitBtn.addEventListener('click', async () => {
       photos: photoUrls
     };
 
-    // Get actual token from session storage
-    const token = sessionStorage.getItem('token');
+    // // Get actual token from session storage
+    // const token = localStorage.getItem('token');
     
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
+    // if (!token) {
+    //   throw new Error('Not authenticated');
+    // }
 
     const response = await fetch(`${API_URL}/items`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(itemData)
     });

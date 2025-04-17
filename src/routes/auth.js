@@ -88,9 +88,9 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Generate JWT token
+        // Generate JWT token with consistent field names
         const token = jwt.sign(
-            { id: user._id, email: user.email },
+            { _id: user._id, email: user.email },  // Use _id instead of id
             process.env.JWT_SECRET || 'your-jwt-secret-key',
             { expiresIn: '7d' }
         );
@@ -216,10 +216,40 @@ router.patch('/update-password', async (req, res) => {
 });
 
 // Middleware to check if user is authenticated
-export const isAuthenticated = (req, res, next) => {
+export const isAuthenticated = async (req, res, next) => {
+    // First check session-based auth
     if (req.isAuthenticated()) {
         return next();
     }
+
+    // Then check JWT token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+            console.log('🔑 Verifying JWT token...');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
+            console.log('📦 Decoded token:', decoded);
+            
+            if (decoded) {
+                // Handle both id and _id cases
+                const userId = decoded.id || decoded._id;
+                if (userId) {
+                    console.log('🔍 Looking up user with ID:', userId);
+                    const user = await User.findById(userId);
+                    if (user) {
+                        console.log('✅ User found:', user.email);
+                        req.user = user;
+                        return next();
+                    }
+                    console.log('❌ User not found in database');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Token verification error:', error);
+        }
+    }
+
     res.status(401).json({ error: 'Not authenticated' });
 };
 

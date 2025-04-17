@@ -363,6 +363,29 @@
                 allCategoryBtn.querySelector('span').classList.add('text-primary-500');
             }
         });
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                // Call the server logout endpoint
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+                    }
+                });
+            } catch (error) {
+                console.error('Logout request failed:', error);
+            } finally {
+                // Clean up local storage and session storage
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                
+                // Redirect to home page
+                window.location.href = '/';
+            }
+        });
     </script>
 </body>
 </html>

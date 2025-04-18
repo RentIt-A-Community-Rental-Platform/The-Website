@@ -191,12 +191,15 @@
         async function displayItems(items) {
 
             let currentUserId;
-            await fetch(`${API_URL}/auth/me`)
-                .then(response => response.json())
-                .then(data => {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`);
+                if (response.ok) {
+                    const data = await response.json();
                     currentUserId = data.user._id;
-                console.log(currentUserId);
-                })  
+                }
+            } catch (error) {
+                console.warn('User not logged in or auth failed. Showing public listings.');
+            }
 
 
             console.log(items);

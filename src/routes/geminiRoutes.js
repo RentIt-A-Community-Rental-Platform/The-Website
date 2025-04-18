@@ -8,7 +8,7 @@ router.post('/analyze', async (req, res) => {
     const { base64Image } = req.body;
 
     if (!base64Image) {
-      console.log('❌ No image provided');
+      console.log('> No image provided');
       return res.status(400).json({ error: 'Missing base64 image' });
     }
 
@@ -16,7 +16,7 @@ router.post('/analyze', async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('❌ Failed to analyze image:', error);
+    console.error('> Failed to analyze image:', error);
     res.status(500).json({ error: 'Failed to analyze image' });
   }
 });

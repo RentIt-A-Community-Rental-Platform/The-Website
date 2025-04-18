@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
-console.log('🔑 Auth routes initialized');
+console.log('> Auth routes initialized');
 
 // Hardcoded test credentials - PLAIN TEXT for testing
 // const TEST_USER = {
@@ -135,7 +135,7 @@ router.get(
 router.post('/logout', (req, res) => {
     req.logout((err) => {
         if (err) {
-            console.error('❌ Logout error:', err);
+            console.error('> Logout error:', err);
             return res.status(500).json({ error: 'Failed to logout' });
         }
         req.session.destroy(() => {
@@ -178,7 +178,7 @@ router.patch('/update-username', async (req, res) => {
 
         res.status(200).json({ message: 'Name updated successfully' });
     } catch (error) {
-        console.error('❌ Error updating name:', error);
+        console.error('> Error updating name:', error);
         res.status(500).json({ error: 'Failed to update name' });
     }
 });
@@ -210,7 +210,7 @@ router.patch('/update-password', async (req, res) => {
 
         res.status(200).json({ message: 'Password updated successfully' });
     } catch (error) {
-        console.error('❌ Error updating password:', error);
+        console.error('> Error updating password:', error);
         res.status(500).json({ error: 'Failed to update password' });
     }
 });
@@ -227,26 +227,26 @@ export const isAuthenticated = async (req, res, next) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         try {
-            console.log('🔑 Verifying JWT token...');
+            console.log('> Verifying JWT token...');
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
-            console.log('📦 Decoded token:', decoded);
+            console.log('> Decoded token:', decoded);
             
             if (decoded) {
                 // Handle both id and _id cases
                 const userId = decoded.id || decoded._id;
                 if (userId) {
-                    console.log('🔍 Looking up user with ID:', userId);
+                    console.log('> Looking up user with ID:', userId);
                     const user = await User.findById(userId);
                     if (user) {
-                        console.log('✅ User found:', user.email);
+                        console.log('> User found:', user.email);
                         req.user = user;
                         return next();
                     }
-                    console.log('❌ User not found in database');
+                    console.log('> User not found in database');
                 }
             }
         } catch (error) {
-            console.error('❌ Token verification error:', error);
+            console.error('> Token verification error:', error);
         }
     }
 
@@ -266,12 +266,12 @@ export const logoutIfLoggedIn = (req, res, next) => {
     if (req.isAuthenticated()) {
         req.logout((err) => {
             if (err) {
-                console.error('❌ Logout error:', err);
+                console.error('> Logout error:', err);
                 return res.status(500).json({ error: 'Failed to logout' });
             }
             req.session.destroy(() => {
                 res.clearCookie('connect.sid');
-                console.log('✅ User logged out');
+                console.log('> User logged out');
                 next();
             });
         });

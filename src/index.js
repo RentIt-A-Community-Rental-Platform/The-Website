@@ -67,9 +67,9 @@ app.get('/api', (req, res) => {
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rentit')
-  .then(() => console.log('✅ Connected to MongoDB successfully!'))
+  .then(() => console.log('> Connected to MongoDB successfully!'))
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('> MongoDB connection error:', err);
     process.exit(1);
   });
 
@@ -79,9 +79,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rentit')
 // Ensure uploads directory exists
 try {
   mkdirSync(join(__dirname, 'uploads'), { recursive: true });
-  console.log('📁 Uploads directory ready');
+  console.log('> Uploads directory ready');
 } catch (error) {
-  console.error('❌ Error creating uploads directory:', error);
+  console.error('> Error creating uploads directory:', error);
 }
 
 // Mount routes
@@ -127,7 +127,7 @@ app.use((req, res, next) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
+  console.error('> Error:', err.stack);
   res.status(500).json({
     error: 'Something went wrong!',
     message: err.message,
@@ -140,12 +140,12 @@ const PORT = process.env.PORT || 3000;
 const serverUrl = `http://localhost:${PORT}`;
 
 app.listen(PORT, () => {
-  console.log('\n🚀 Server is running!');
-  console.log('📡 Available endpoints:');
+  console.log('\n> Server is running!');
+  console.log('> Available endpoints:');
   console.log(`   - ${serverUrl}/items`);
   console.log(`   - ${serverUrl}/auth/google`);
   console.log(`   - ${serverUrl}/dashboard`);
-  console.log('\n🔗 Open in browser:');
+  console.log('\n> Open in browser:');
   console.log(`   ${serverUrl}`);
-  console.log('\n👀 Watching for changes...');
+  console.log('\n> Watching for changes...');
 });

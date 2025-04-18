@@ -20,11 +20,11 @@ cloudinary.config({
 router.post('/upload-image', upload.single('image'), async (req, res) => {
     try {
       if (!req.file) {
-        console.log('❌ No file received');
+        console.log('> No file received');
         return res.status(400).json({ error: 'No file uploaded' });
       }
   
-      console.log('📸 File received:', req.file.originalname, req.file.mimetype);
+      console.log('> File received:', req.file.originalname, req.file.mimetype);
   
       const streamUpload = (fileBuffer) => {
         return new Promise((resolve, reject) => {
@@ -42,11 +42,11 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
       };
   
       const result = await streamUpload(req.file.buffer);
-      console.log('✅ Uploaded to Cloudinary:', result.secure_url);
+      console.log('> Uploaded to Cloudinary:', result.secure_url);
       res.json({ secure_url: result.secure_url });
   
     } catch (err) {
-      console.error('❌ Upload failed:', err);
+      console.error('> Upload failed:', err);
       res.status(500).json({ error: 'Failed to upload image', details: err.message });
     }
   });

@@ -142,7 +142,7 @@ async function analyzeImageWithGemini(imageFile) {
     } catch (error) {
       overlay.classList.add('hidden');
       console.error('Error analyzing image:', error);
-      alert('Failed to analyze image. Please fill in the details manually.');
+      alert('Failed to analyze image.');
     }
   }
   

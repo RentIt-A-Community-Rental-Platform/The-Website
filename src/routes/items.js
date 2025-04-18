@@ -9,17 +9,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const router = express.Router();
-console.log('📦 Items routes initialized');
+console.log('> Items routes initialized');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        console.log('📁 Setting upload destination');
+        console.log('> Setting upload destination');
         cb(null, join(__dirname, '../uploads'));
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        console.log('📄 Generated filename:', uniqueSuffix + '-' + file.originalname);
+        console.log('> Generated filename:', uniqueSuffix + '-' + file.originalname);
         cb(null, uniqueSuffix + '-' + file.originalname);
     }
 });

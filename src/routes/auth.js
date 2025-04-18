@@ -61,7 +61,7 @@ router.post('/register', async (req, res) => {
         );
         
         res.status(201).json({ 
-            user: { email, name },
+            user: {  _id: user._id, email, name },
             token
         });
     } catch (error) {
@@ -103,7 +103,7 @@ router.post('/login', async (req, res) => {
         });
         
         res.json({ 
-            user: { email: user.email, name: user.name },
+            user: {  _id: user._id, email: user.email, name: user.name },
             token
         });
     } catch (error) {

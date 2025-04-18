@@ -160,6 +160,8 @@
         let currentCategory = 'all';
         let allItems = [];
 
+        
+
         // Set min dates for date inputs
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('startDate').min = today;
@@ -186,38 +188,62 @@
         }
 
         // Display items in the grid
-        function displayItems(items) {
+        async function displayItems(items) {
+
+            let currentUserId;
+            await fetch(`${API_URL}/auth/me`)
+                .then(response => response.json())
+                .then(data => {
+                    currentUserId = data.user._id;
+                console.log(currentUserId);
+                })  
+
+
             console.log(items);
             const grid = document.getElementById('itemsGrid');
             grid.innerHTML = items
                 .filter(item => currentCategory === 'all' || item.category === currentCategory)
                 .map(item => `
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                        ${item.photos && item.photos.length > 0 
-                            ? `<img src="${item.photos[0]}" alt="${item.title}" class="w-full h-48 object-cover">`
-                            : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                <i class="fas fa-image text-gray-400 text-4xl"></i>
-                               </div>`
-                        }
-                        <div class="p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="font-semibold text-lg">${item.title}</h3>
-                                <span class="text-sm px-2 py-1 bg-gray-100 rounded-full">${item.category}</span>
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
+                    ${item.photos && item.photos.length > 0 
+                        ? `<img src="${item.photos[0]}" alt="${item.title}" class="w-full h-48 object-cover">`
+                        : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-4xl"></i>
+                        </div>`
+                    }
+                    <div class="p-4 flex flex-col flex-grow">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-lg">${item.title}</h3>
+                            <span class="text-sm px-2 py-1 bg-gray-100 rounded-full">${item.category}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-4 flex-grow">${item.description}</p>
+                        <div class="flex justify-between items-center mt-auto">
+                            <div>
+                                <p class="text-blue-600 font-bold">$${item.price}/day</p>
+                                <p class="text-gray-500 text-sm">Deposit: $${item.deposit}</p>
+                                ${item.userId === currentUserId 
+                                ? `<p class="text-gray-400 text-xs mt-1">
+                                        Listed by: 
+                                        <a href="/my-listings.html" class="text-primary-600 hover:underline">
+                                        ${item.userName || 'Anonymous'}
+                                        </a>
+                                    </p>`
+                                : `<p class="text-gray-400 text-xs mt-1">
+                                        Listed by: 
+                                        <a href="/user-listings.html?userId=${item.userId}&name=${encodeURIComponent(item.userName)}" 
+                                        class="text-primary-600 hover:underline">
+                                        ${item.userName || 'Anonymous'}
+                                        </a>
+                                    </p>`}
+
                             </div>
-                            <p class="text-gray-600 text-sm mb-4">${item.description}</p>
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <p class="text-blue-600 font-bold">$${item.price}/day</p>
-                                    <p class="text-gray-500 text-sm">Deposit: $${item.deposit}</p>
-                                    <p class="text-gray-400 text-xs mt-1">Listed by: ${item.userName || 'Anonymous'}</p>
-                                </div>
-                                <button onclick="window.location.href='/item.html?id=${item._id}'" 
-                                        class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
-                                    Rent Now
-                                </button>
-                            </div>
+                            <button onclick="window.location.href='/item.html?id=${item._id}'" 
+                                    class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                                Rent Now
+                            </button>
                         </div>
                     </div>
+                </div>
                 `).join('');
         }
 

@@ -52,7 +52,7 @@
               <button id="logoutBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</button>
             </div>
           </div>
-          <a href="/auth.html" id="loginLink" class="text-gray-600 hover:text-gray-900">Login</a>
+          <!-- <a href="/auth.html" id="loginLink" class="text-gray-600 hover:text-gray-900">Login</a> -->
         </div>
       </div>
     </div>
@@ -71,16 +71,27 @@
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
 
     async function loadMyListings() {
-      if (!user || !user._id) {
-        alert('You must be logged in to view your listings.');
-        window.location.href = '/auth.html';
-        return;
-      }
+      // if (!user || !user._id) {
+      //   alert('You must be logged in to view your listings.');
+      //   window.location.href = '/auth.html';
+      //   return;
+      // }
 
       try {
-        const res = await fetch(`${API_URL}/items?userId=${user._id}`);
+        let userId;
+
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+        await fetch(`${API_URL}/auth/me`)
+            .then(response => response.json())
+            .then(data => {
+              userId = data.user._id;
+              console.log(userId);
+            })    
+        const res = await fetch(`${API_URL}/items?userId=${userId}`);
         const items = await res.json();
 
+        console.log(userId);
         const grid = document.getElementById('myListingsGrid');
         if (items.length === 0) {
           grid.innerHTML = `<p class="text-gray-500 col-span-full">You haven't listed any items yet.</p>`;

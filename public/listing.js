@@ -159,22 +159,38 @@ async function compressImage(file) {
 async function uploadToCloudinary(file) {
     const formData = new FormData();
     formData.append('image', file);
-  
-    const response = await fetch(`${API_URL}/api/upload-image`, {
-      method: 'POST',
-      body: formData
-    });
-  
-    if (!response.ok) {
-      throw new Error('Upload failed');
+
+    try {
+        const response = await fetch(`${API_URL}/api/upload-image`, {
+        method: 'POST',
+        body: formData
+        });
+    
+        if (!response.ok) {
+            const { error } = await response.json();
+            throw new Error(error || 'Upload failed');
+        }
+    } catch (err) {
+      alert(err.message); // or show it in your UI
     }
-  
     const data = await response.json();
     return data.secure_url;
   }
 
   function handleFiles(e) {
     const files = [...e.target.files];
+
+    const maxFileSizeMB = 10;
+
+    // Check for large files
+    for (const file of files) {
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > maxFileSizeMB) {
+        alert(`"${file.name}" is too large (${sizeMB.toFixed(2)} MB). Please upload images under ${maxFileSizeMB}MB.`);
+        return; // Stop handling if any file is too big
+        }
+    }
+    
     uploadedPhotos = files;
     formData.photos = files;
   

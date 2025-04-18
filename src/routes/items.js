@@ -94,5 +94,47 @@ router.get('/:id', async (req, res) => {
 });
 
 
+// Update item (PUT)
+router.put('/:id', isAuthenticated, async (req, res) => {
+    try {
+        const itemId = req.params.id;
+        const userId = req.user._id;
+        const updateData = req.body;
+
+        const updatedItem = await Item.findOneAndUpdate(
+            { _id: itemId, userId },
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedItem) {
+            return res.status(404).json({ error: 'Item not found or unauthorized' });
+        }
+
+        res.json(updatedItem);
+    } catch (error) {
+        console.error('Error updating item:', error);
+        res.status(500).json({ error: 'Failed to update item' });
+    }
+});
+
+// Delete item (DELETE)
+router.delete('/:id', isAuthenticated, async (req, res) => {
+    try {
+        const itemId = req.params.id;
+        const userId = req.user._id;
+
+        const deletedItem = await Item.findOneAndDelete({ _id: itemId, userId });
+
+        if (!deletedItem) {
+            return res.status(404).json({ error: 'Item not found or unauthorized' });
+        }
+
+        res.json({ message: 'Item deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting item:', error);
+        res.status(500).json({ error: 'Failed to delete item' });
+    }
+});
 
 export const itemRoutes = router; 

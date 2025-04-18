@@ -261,6 +261,7 @@ nextBtn.addEventListener('click', () => {
 
 submitBtn.addEventListener('click', async () => {
   try {
+    document.getElementById('submitLoadingOverlay').classList.remove('hidden');
     console.log('Uploading photos to Cloudinary...');
     
     const photoUploadPromises = formData.photos.map(file => compressImage(file).then(uploadToCloudinary));
@@ -292,7 +293,7 @@ submitBtn.addEventListener('click', async () => {
 
     if (response.ok) {
       console.log('Listing created successfully');
-      alert('Listing created successfully!');
+      document.getElementById('submitLoadingOverlay').classList.add('hidden');
       window.location.href = '/';
     } else {
       const errorText = await response.text();

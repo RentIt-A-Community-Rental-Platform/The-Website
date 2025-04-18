@@ -103,16 +103,16 @@
                         <select id="category" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                             <option value="">Select a category</option>
                             <option value="Party & Events">Party & Events</option>
-                            <option value="Gaming">Gaming</option>
+                            <!-- <option value="Gaming">Gaming</option> -->
                             <option value="Photography">Photography</option>
                             <option value="Music">Music</option>
-                            <option value="Clothing">Clothing</option>
+                            <!-- <option value="Clothing">Clothing</option> -->
                             <option value="Kitchen">Kitchen</option>
                             <option value="Books">Books</option>
                             <option value="Electronics">Electronics</option>
                             <option value="Sports">Sports</option>
                             <option value="Tools">Tools</option>
-                            <option value="Art">Art</option>
+                            <!-- <option value="Art">Art</option> -->
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -286,6 +286,15 @@
         <div class="text-center">
         <i class="fas fa-magic text-4xl text-primary-600 animate-pulse mb-4"></i>
         <p class="text-xl font-semibold text-primary-700">Generating listing details using AI...</p>
+        <p class="text-gray-500 mt-2">This may take a few seconds.</p>
+        </div>
+    </div>
+
+    <!-- Submit Loading Screen -->
+    <div id="submitLoadingOverlay" class="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center hidden">
+        <div class="text-center">
+        <i class="fas fa-magic text-4xl text-primary-600 animate-pulse mb-4"></i>
+        <p class="text-xl font-semibold text-primary-700">Posting Item...</p>
         <p class="text-gray-500 mt-2">This may take a few seconds.</p>
         </div>
     </div>

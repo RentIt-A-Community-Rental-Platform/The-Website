@@ -32,15 +32,17 @@ const upload = multer({
 });
 
 // Get all items
+// GET /items?userId=123
 router.get('/', async (req, res) => {
     try {
-        const items = await Item.find().sort({ createdAt: -1 });
-        res.json(items);
+      const query = req.query.userId ? { userId: req.query.userId } : {};
+      const items = await Item.find(query).sort({ createdAt: -1 });
+      res.json(items);
     } catch (error) {
-        console.error('Error fetching items:', error);
-        res.status(500).json({ error: 'Failed to fetch items' });
+      console.error('Error fetching items:', error);
+      res.status(500).json({ error: 'Failed to fetch items' });
     }
-});
+  });
 
 // Create new item with authentication
 router.post('/', isAuthenticated, async (req, res) => {
@@ -90,5 +92,7 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch item' });
     }
 });
+
+
 
 export const itemRoutes = router; 

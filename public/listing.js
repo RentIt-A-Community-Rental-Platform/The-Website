@@ -160,8 +160,9 @@ async function uploadToCloudinary(file) {
     const formData = new FormData();
     formData.append('image', file);
 
+    let response = {}
     try {
-        const response = await fetch(`${API_URL}/api/upload-image`, {
+        response = await fetch(`${API_URL}/api/upload-image`, {
         method: 'POST',
         body: formData
         });
@@ -178,6 +179,7 @@ async function uploadToCloudinary(file) {
   }
 
   function handleFiles(e) {
+    const input = e.target;
     const files = [...e.target.files];
 
     const maxFileSizeMB = 10;
@@ -187,6 +189,7 @@ async function uploadToCloudinary(file) {
         const sizeMB = file.size / (1024 * 1024);
         if (sizeMB > maxFileSizeMB) {
         alert(`"${file.name}" is too large (${sizeMB.toFixed(2)} MB). Please upload images under ${maxFileSizeMB}MB.`);
+        input.value = '';
         return; // Stop handling if any file is too big
         }
     }

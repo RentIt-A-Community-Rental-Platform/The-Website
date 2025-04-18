@@ -37,6 +37,7 @@ loginFormElement.addEventListener('submit', async (e) => {
         const data = await response.json();
         if (response.ok) {
             localStorage.setItem('token', data.token);
+            sessionStorage.setItem('user', JSON.stringify(data.user));
             window.location.href = 'list.html';
         } else {
             alert(data.error || 'Login failed');
@@ -67,6 +68,7 @@ registerFormElement.addEventListener('submit', async (e) => {
         if (response.ok) {
             console.log('✅ Registration successful');
             localStorage.setItem('token', data.token);
+            sessionStorage.setItem('user', JSON.stringify(data.user));
             window.location.href = 'list.html';
         } else {
             console.error('❌ Registration failed:', data);

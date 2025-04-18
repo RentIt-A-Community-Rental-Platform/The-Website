@@ -69,7 +69,7 @@
                         </button>
                         <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                             <div id="userDisplayName" class="px-4 py-2 text-sm text-gray-700 border-b"></div>
-                            <a href="/list.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Listings</a>
+                            <a href="/my-listings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Listings</a>
                             <button id="logoutBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</button>
                         </div>
                     </div>
@@ -209,6 +209,7 @@
                                 <div>
                                     <p class="text-blue-600 font-bold">$${item.price}/day</p>
                                     <p class="text-gray-500 text-sm">Deposit: $${item.deposit}</p>
+                                    <p class="text-gray-400 text-xs mt-1">Listed by: ${item.userName || 'Anonymous'}</p>
                                 </div>
                                 <button onclick="window.location.href='/item.html?id=${item._id}'" 
                                         class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">

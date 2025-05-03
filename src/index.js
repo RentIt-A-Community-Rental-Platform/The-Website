@@ -8,11 +8,11 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import multer from 'multer';
 import { itemRoutes } from './routes/items.js';
-// import { setupGemini } from './utils/gemini.js';
 import { authRoutes } from './routes/auth.js';
 import cloudinaryUpload from './routes/cloudinaryUpload.js';
 import geminiRoutes from './routes/geminiRoutes.js';
 import { mkdirSync } from 'fs';
+import { rentalRoutes } from './routes/rentals.js';
 
 // Load environment variables
 dotenv.config();
@@ -87,6 +87,7 @@ try {
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
+app.use('/rentals', rentalRoutes);
 app.use('/api', cloudinaryUpload); // /api/upload-image
 app.use('/api/gemini', geminiRoutes); //api for gemini
 
@@ -134,6 +135,9 @@ app.use((err, req, res, next) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Register routes
+app.use('/rentals', rentalRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;

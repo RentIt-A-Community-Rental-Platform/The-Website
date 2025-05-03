@@ -177,7 +177,36 @@
         document.getElementById('notificationBtn').addEventListener('click', () => {
             document.getElementById('notificationDropdown').classList.toggle('hidden');
         });
-
+        // function renderNotifications(requests) {
+        //         const list = document.getElementById('notificationList');
+        //         list.innerHTML = '';
+        //         if (requests.length === 0) {
+        //             document.getElementById('noNotifications').classList.remove('hidden');
+        //             return;
+        //         }
+        //         document.getElementById('noNotifications').classList.add('hidden');
+        //         requests.forEach(req => {
+        //             const div = document.createElement('div');
+        //             div.className = 'p-4 flex justify-between items-center';
+        //             div.innerHTML = `
+        //                 <div>
+        //                     <span class="font-semibold">${req.itemTitle}</span>
+        //                     <span class="text-gray-500 text-sm">by ${req.requesterName}</span>
+        //                 </div>
+        //                 <button class="review-btn px-3 py-1 bg-primary-500 text-white rounded" data-id="${req._id}">
+        //                     Review
+        //                 </button>
+        //             `;
+        //             list.appendChild(div);
+        //         });
+        //         // Add event listeners for review buttons
+        //         list.querySelectorAll('.review-btn').forEach(btn => {
+        //             btn.addEventListener('click', (e) => {
+        //                 const id = e.target.getAttribute('data-id');
+        //                 window.location.href = `/review-request.html?id=${id}`;
+        //             });
+        //         });
+        //     }
         // Fetch and render rental requests (replace with your API logic)
         async function loadNotifications() {
             // Example: Fetch rental requests for the logged-in user
@@ -211,26 +240,21 @@
                     <span class="font-semibold">${req.itemId.title}</span>
                     <span class="text-sm text-gray-500 mb-2">Requested by: ${req.renterId.name}</span>
                     <div class="flex space-x-2">
-                        <button class="accept-btn px-3 py-1 bg-green-500 text-white rounded" data-id="${req._id}">Accept</button>
-                        <button class="reject-btn px-3 py-1 bg-red-500 text-white rounded" data-id="${req._id}">Reject</button>
+                        <button class="review-btn px-3 py-1 bg-primary-500 text-white rounded" data-id="${req._id}">Review</button>
+                        <button class="decline-btn px-3 py-1 bg-red-500 text-white rounded" data-id="${req._id}">Decline</button>
                     </div>
                 `;
                 list.appendChild(div);
             });
         
-            // Add event listeners for accept/reject
-            list.querySelectorAll('.accept-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+            // Add event listeners for review and decline
+            list.querySelectorAll('.review-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
                     const id = e.target.getAttribute('data-id');
-                    await fetch(`${API_URL}/rentals/${id}/accept`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    loadNotifications();
-                    // Optionally update listings/rentals UI here
+                    window.location.href = `/review-request.html?id=${id}`;
                 });
             });
-            list.querySelectorAll('.reject-btn').forEach(btn => {
+            list.querySelectorAll('.decline-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.getAttribute('data-id');
                     await fetch(`${API_URL}/rentals/${id}/reject`, {
@@ -241,7 +265,7 @@
                 });
             });
         }
-
+            
         // Load notifications on page load and optionally poll every X seconds
         // document.addEventListener('DOMContentLoaded', loadNotifications);
         setInterval(loadNotifications, 10000); // Uncomment for polling

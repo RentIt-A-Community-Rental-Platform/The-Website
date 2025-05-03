@@ -75,4 +75,53 @@ function calculateTotalPrice(dailyRate, startDate, endDate, deposit) {
     return (days * dailyRate) + deposit;
 }
 
+// Get all pending rental requests for the current user (as owner)
+router.get('/pending', isAuthenticated, async (req, res) => {
+    try {
+        const pendingRequests = await Rental.find({ ownerId: req.user._id, status: 'pending' })
+            .populate('itemId')
+            .populate('renterId');
+        res.json(pendingRequests);
+    } catch (error) {
+        console.error('Error fetching pending rental requests:', error);
+        res.status(500).json({ error: 'Failed to fetch pending rental requests' });
+    }
+});
+
+// Accept a rental request
+router.post('/:id/accept', isAuthenticated, async (req, res) => {
+    try {
+        const rental = await Rental.findOneAndUpdate(
+            { _id: req.params.id, ownerId: req.user._id, status: 'pending' },
+            { status: 'accepted' },
+            { new: true }
+        );
+        if (!rental) {
+            return res.status(404).json({ error: 'Rental request not found or already processed' });
+        }
+        res.json({ message: 'Rental request accepted', rental });
+    } catch (error) {
+        console.error('Error accepting rental request:', error);
+        res.status(500).json({ error: 'Failed to accept rental request' });
+    }
+});
+
+// Reject a rental request
+router.post('/:id/reject', isAuthenticated, async (req, res) => {
+    try {
+        const rental = await Rental.findOneAndUpdate(
+            { _id: req.params.id, ownerId: req.user._id, status: 'pending' },
+            { status: 'rejected' },
+            { new: true }
+        );
+        if (!rental) {
+            return res.status(404).json({ error: 'Rental request not found or already processed' });
+        }
+        res.json({ message: 'Rental request rejected', rental });
+    } catch (error) {
+        console.error('Error rejecting rental request:', error);
+        res.status(500).json({ error: 'Failed to reject rental request' });
+    }
+});
+
 export const rentalRoutes = router;

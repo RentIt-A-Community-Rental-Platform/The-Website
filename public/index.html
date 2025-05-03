@@ -60,6 +60,18 @@
 
                 <!-- Auth Buttons -->
                 <div class="flex items-center space-x-4">
+                    <!-- Notification Center -->
+                    <div class="relative">
+                        <button id="notificationBtn" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
+                            <i class="fas fa-comments text-primary-600"></i>
+                            <span id="notificationBadge" class="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs rounded-full text-center hidden">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg py-2 z-50 max-h-96 overflow-y-auto">
+                            <div class="px-4 py-2 font-semibold border-b">Rental Requests</div>
+                            <div id="notificationList" class="divide-y"></div>
+                            <div class="px-4 py-2 text-center text-sm text-gray-500" id="noNotifications">No new requests.</div>
+                        </div>
+                    </div>
                     <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
                     
                     <!-- User icon for logged in users (hidden by default) -->
@@ -160,6 +172,86 @@
 
     <script>
         const API_URL = 'http://localhost:3000';
+
+        // Toggle notification dropdown
+        document.getElementById('notificationBtn').addEventListener('click', () => {
+            document.getElementById('notificationDropdown').classList.toggle('hidden');
+        });
+
+        // Fetch and render rental requests (replace with your API logic)
+        async function loadNotifications() {
+            // Example: Fetch rental requests for the logged-in user
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) return;
+        
+            const res = await fetch(`${API_URL}/rentals/pending`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const requests = await res.json();
+        
+            const list = document.getElementById('notificationList');
+            const badge = document.getElementById('notificationBadge');
+            const noNotif = document.getElementById('noNotifications');
+            list.innerHTML = '';
+            if (requests.length === 0) {
+                badge.classList.add('hidden');
+                noNotif.classList.remove('hidden');
+                return;
+            }
+            badge.textContent = requests.length;
+            badge.classList.remove('hidden');
+            noNotif.classList.add('hidden');
+            requests.forEach(req => {
+                const div = document.createElement('div');
+                div.className = 'px-4 py-2 flex flex-col';
+                div.innerHTML = `
+                    <span class="font-semibold">${req.itemTitle}</span>
+                    <span class="text-sm text-gray-500 mb-2">Requested by: ${req.requesterName}</span>
+                    <div class="flex space-x-2">
+                        <button class="accept-btn px-3 py-1 bg-green-500 text-white rounded" data-id="${req._id}">Accept</button>
+                        <button class="reject-btn px-3 py-1 bg-red-500 text-white rounded" data-id="${req._id}">Reject</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        
+            // Add event listeners for accept/reject
+            list.querySelectorAll('.accept-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    await fetch(`${API_URL}/rental-requests/${id}/accept`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    loadNotifications();
+                    // Optionally update listings/rentals UI here
+                });
+            });
+            list.querySelectorAll('.reject-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    await fetch(`${API_URL}/rental-requests/${id}/reject`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    loadNotifications();
+                });
+            });
+        }
+
+        // Load notifications on page load and optionally poll every X seconds
+        document.addEventListener('DOMContentLoaded', loadNotifications);
+        // setInterval(loadNotifications, 30000); // Uncomment for polling
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const notifBtn = document.getElementById('notificationBtn');
+            const notifDropdown = document.getElementById('notificationDropdown');
+            if (!notifBtn.contains(event.target) && !notifDropdown.contains(event.target)) {
+                notifDropdown.classList.add('hidden');
+            }
+        });
+
         let currentCategory = 'all';
         let allItems = [];
 

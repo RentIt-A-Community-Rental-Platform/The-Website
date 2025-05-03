@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Listing - RentIt</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-3xl mx-auto py-12 px-4">
+    <h1 class="text-3xl font-bold text-center mb-8">Edit Your Listing</h1>
+
+    <form id="editForm" class="bg-white p-8 rounded shadow">
+      <div class="mb-4">
+        <label class="block text-gray-700 font-bold mb-2">Title</label>
+        <input type="text" id="title" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 font-bold mb-2">Description</label>
+        <textarea id="description" class="w-full border rounded px-3 py-2" rows="4"></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 font-bold mb-2">Category</label>
+        <select id="category" class="w-full border rounded px-3 py-2">
+          <option value="Party & Events">Party & Events</option>
+          <option value="Photography">Photography</option>
+          <option value="Music">Music</option>
+          <option value="Kitchen">Kitchen</option>
+          <option value="Books">Books</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Sports">Sports</option>
+          <option value="Tools">Tools</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 font-bold mb-2">Price ($/day)</label>
+        <input type="number" id="price" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-700 font-bold mb-2">Deposit ($)</label>
+        <input type="number" id="deposit" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <button type="submit" class="bg-primary-500 text-white px-4 py-2 rounded hover:bg-primary-600" style="background-color: #3b82f6;">Save Changes</button>
+    </form>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+    const params = new URLSearchParams(window.location.search);
+    const itemId = params.get('id');
+
+    async function fetchItem() {
+      const res = await fetch(`${API_URL}/items/${itemId}`);
+      const item = await res.json();
+
+      document.getElementById('title').value = item.title;
+      document.getElementById('description').value = item.description;
+      document.getElementById('category').value = item.category;
+      document.getElementById('price').value = item.price;
+      document.getElementById('deposit').value = item.deposit;
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const updatedItem = {
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        category: document.getElementById('category').value,
+        price: parseFloat(document.getElementById('price').value),
+        deposit: parseFloat(document.getElementById('deposit').value)
+      };
+
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+      const res = await fetch(`${API_URL}/items/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedItem)
+      });
+
+      if (res.ok) {
+        alert('Listing updated successfully.');
+        window.location.href = '/my-listings.html';
+      } else {
+        alert('Failed to update listing.');
+      }
+    });
+
+    fetchItem();
+  </script>
+</body>
+</html>

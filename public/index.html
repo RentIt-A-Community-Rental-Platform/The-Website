@@ -63,7 +63,7 @@
                     <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
                     
                     <!-- User icon for logged in users (hidden by default) -->
-                    <div id="userIconContainer" class="hidden relative">
+                    <div id="userIconContainer" class="relative">
                         <button id="userMenuButton" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
                             <i class="fas fa-user text-gray-600"></i>
                         </button>
@@ -75,7 +75,7 @@
                     </div>
                     
                     <!-- Login link for logged out users -->
-                    <a href="/auth.html" id="loginLink" class="text-gray-600 hover:text-gray-900">Login</a>
+                    <a href="/auth.html" id="loginLink" class="hidden text-gray-600 hover:text-gray-900">Login</a>
                 </div>
             </div>
         </div>
@@ -327,33 +327,33 @@
             });
         }
 
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            const userIconContainer = document.getElementById('userIconContainer');
-            const loginLink = document.getElementById('loginLink');
-            const userDisplayName = document.getElementById('userDisplayName');
+        //     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        //     const userIconContainer = document.getElementById('userIconContainer');
+        //     const loginLink = document.getElementById('loginLink');
+        //     const userDisplayName = document.getElementById('userDisplayName');
             
-            if (token) {
-                // User is logged in
-                userIconContainer.classList.remove('hidden');
-                loginLink.classList.add('hidden');
+        //     if (token) {
+        //         // User is logged in
+        //         userIconContainer.classList.remove('hidden');
+        //         loginLink.classList.add('hidden');
                 
-                // Get and display user name if available
-                const userData = sessionStorage.getItem('user');
-                if (userData) {
-                    try {
-                        const user = JSON.parse(userData);
-                        userDisplayName.textContent = user.name || user.email || 'User';
-                    } catch (e) {
-                        userDisplayName.textContent = 'User';
-                    }
-                } else {
-                    userDisplayName.textContent = 'User';
-                }
-        } else {
-            // User is not logged in
-            userIconContainer.classList.add('hidden');
-            loginLink.classList.remove('hidden');
-        }
+        //         // Get and display user name if available
+        //         const userData = sessionStorage.getItem('user');
+        //         if (userData) {
+        //             try {
+        //                 const user = JSON.parse(userData);
+        //                 userDisplayName.textContent = user.name || user.email || 'User';
+        //             } catch (e) {
+        //                 userDisplayName.textContent = 'User';
+        //             }
+        //         } else {
+        //             userDisplayName.textContent = 'User';
+        //         }
+        // } else {
+        //     // User is not logged in
+        //     userIconContainer.classList.add('hidden');
+        //     loginLink.classList.remove('hidden');
+        // }
 
         // Setup user dropdown functionality
         function setupUserDropdown() {

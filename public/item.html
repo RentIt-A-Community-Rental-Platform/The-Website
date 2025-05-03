@@ -40,9 +40,24 @@
                         <span class="ml-2 text-xl font-bold text-primary-600">RentIt</span>
                     </a>
                 </div>
+                <!-- Auth Buttons -->
                 <div class="flex items-center space-x-4">
                     <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
-                    <a href="/auth.html" class="text-gray-600 hover:text-gray-900">Login</a>
+                    
+                    <!-- User icon for logged in users (hidden by default) -->
+                    <div id="userIconContainer" class="relative">
+                        <button id="userMenuButton" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
+                            <i class="fas fa-user text-gray-600"></i>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <div id="userDisplayName" class="px-4 py-2 text-sm text-gray-700 border-b"></div>
+                            <a href="/my-listings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Listings</a>
+                            <button id="logoutBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Login link for logged out users -->
+                    <a href="/auth.html" id="loginLink" class="hidden text-gray-600 hover:text-gray-900">Login</a>
                 </div>
             </div>
         </div>
@@ -243,6 +258,8 @@
                     //     }
                     // });
 
+                    
+
                     // Load item when page loads
                     loadItem();
                 </script>
@@ -251,7 +268,83 @@
     </div>
 
     <script>
+         function checkAuth() {
+
+            console.log('NOT BOO')
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            fetch(`${API_URL}/auth/status`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const userIconContainer = document.getElementById('userIconContainer');
+                const loginLink = document.getElementById('loginLink');
+                const userDisplayName = document.getElementById('userDisplayName');
+                
+                if (data.isAuthenticated) {
+                    // User is logged in
+                    userIconContainer.classList.remove('hidden');
+                    loginLink.classList.add('hidden');
+                    
+                    // Display user name
+                    userDisplayName.textContent = data.user.name || data.user.email || 'User';
+                    
+                    if (data.user) {
+                        // Store updated user info
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                } else {
+                    // User is not logged in
+                    userIconContainer.classList.add('hidden');
+                    loginLink.classList.remove('hidden');
+                    
+                    // Clear any stale user data
+                    sessionStorage.removeItem('user');
+                }
+            })
+            .catch(error => {
+                console.error('Auth check error:', error);
+                // Handle as not authenticated in case of error
+                document.getElementById('userIconContainer').classList.add('hidden');
+                document.getElementById('loginLink').classList.remove('hidden');
+            });
+        }
+
+        // Setup user dropdown functionality
+        function setupUserDropdown() {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            userMenuButton?.addEventListener('click', function() {
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', function(event) {
+                if (userMenuButton && !userMenuButton.contains(event.target) && 
+                    userDropdown && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Setup logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            logoutBtn?.addEventListener('click', function() {
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                window.location.reload();
+            });
+        }
+
+
         document.addEventListener('DOMContentLoaded', () => {
+
+            checkAuth();
+            setupUserDropdown();
             // Remove the old rentButton event handler and instead call setupRentNowButton
             document.getElementById('rentNowBtn').addEventListener('click', async () => {
                 setupRentNowButton();
@@ -264,6 +357,31 @@
                     };
                 };
             });
+        });
+
+
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                // Call the server logout endpoint
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+                    }
+                });
+            } catch (error) {
+                console.error('Logout request failed:', error);
+            } finally {
+                // Clean up local storage and session storage
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                
+                // Redirect to home page
+                window.location.href = '/index.html';
+            }
         });
     </script>
 </body>

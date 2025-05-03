@@ -81,6 +81,7 @@ router.get('/pending', isAuthenticated, async (req, res) => {
         const pendingRequests = await Rental.find({ ownerId: req.user._id, status: 'pending' })
             .populate('itemId')
             .populate('renterId');
+
         res.json(pendingRequests);
     } catch (error) {
         console.error('Error fetching pending rental requests:', error);

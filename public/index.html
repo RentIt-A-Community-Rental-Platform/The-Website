@@ -182,13 +182,16 @@
         async function loadNotifications() {
             // Example: Fetch rental requests for the logged-in user
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            if (!token) return;
+
+            console.log('notification loading');
+            // if (!token) return;
+
         
             const res = await fetch(`${API_URL}/rentals/pending`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const requests = await res.json();
-        
+
             const list = document.getElementById('notificationList');
             const badge = document.getElementById('notificationBadge');
             const noNotif = document.getElementById('noNotifications');
@@ -205,8 +208,8 @@
                 const div = document.createElement('div');
                 div.className = 'px-4 py-2 flex flex-col';
                 div.innerHTML = `
-                    <span class="font-semibold">${req.itemTitle}</span>
-                    <span class="text-sm text-gray-500 mb-2">Requested by: ${req.requesterName}</span>
+                    <span class="font-semibold">${req.itemId.title}</span>
+                    <span class="text-sm text-gray-500 mb-2">Requested by: ${req.renterId.name}</span>
                     <div class="flex space-x-2">
                         <button class="accept-btn px-3 py-1 bg-green-500 text-white rounded" data-id="${req._id}">Accept</button>
                         <button class="reject-btn px-3 py-1 bg-red-500 text-white rounded" data-id="${req._id}">Reject</button>
@@ -219,7 +222,7 @@
             list.querySelectorAll('.accept-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.getAttribute('data-id');
-                    await fetch(`${API_URL}/rental-requests/${id}/accept`, {
+                    await fetch(`${API_URL}/rentals/${id}/accept`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -230,7 +233,7 @@
             list.querySelectorAll('.reject-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.getAttribute('data-id');
-                    await fetch(`${API_URL}/rental-requests/${id}/reject`, {
+                    await fetch(`${API_URL}/rentals/${id}/reject`, {
                         method: 'POST',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -240,8 +243,8 @@
         }
 
         // Load notifications on page load and optionally poll every X seconds
-        document.addEventListener('DOMContentLoaded', loadNotifications);
-        // setInterval(loadNotifications, 30000); // Uncomment for polling
+        // document.addEventListener('DOMContentLoaded', loadNotifications);
+        setInterval(loadNotifications, 10000); // Uncomment for polling
 
         // Hide dropdown when clicking outside
         document.addEventListener('click', function(event) {
@@ -479,6 +482,7 @@
             loadItems();
             checkAuth();
             setupUserDropdown();
+            loadNotifications();
             
             // Set first category (All) as active by default
             const allCategoryBtn = document.querySelector('.category-btn[data-category="all"]');

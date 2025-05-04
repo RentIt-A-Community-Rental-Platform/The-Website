@@ -60,10 +60,17 @@
 
                 <!-- Auth Buttons -->
                 <div class="flex items-center space-x-4">
-                    <!-- Notification Center -->
+                    <!-- Chat Icon -->
+                    <div class="relative">
+                        <button id="chatBtn" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none" onclick="window.location.href='/review-request.html'">
+                            <i class="fas fa-comments text-primary-600"></i>
+                            <span id="chatBadge" class="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs rounded-full text-center hidden">0</span>
+                        </button>
+                    </div>
+                    <!-- Notification Icon -->
                     <div class="relative">
                         <button id="notificationBtn" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
-                            <i class="fas fa-comments text-primary-600"></i>
+                            <i class="fas fa-bell text-primary-600"></i>
                             <span id="notificationBadge" class="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs rounded-full text-center hidden">0</span>
                         </button>
                         <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg py-2 z-50 max-h-96 overflow-y-auto">

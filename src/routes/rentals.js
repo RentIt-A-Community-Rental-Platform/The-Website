@@ -17,7 +17,8 @@ router.post('/', isAuthenticated, async (req, res) => {
             meetingLocation,
             notes,
             startDate,
-            endDate
+            endDate,
+            chatHistory // <-- Add this line to destructure chatHistory from req.body
         } = req.body;
 
 
@@ -31,8 +32,17 @@ router.post('/', isAuthenticated, async (req, res) => {
         }
         
         // Create the rental request
+        // When creating the rental, make sure to include chatHistory
         const rental = new Rental({
             itemId,
+            paymentMethod,
+            meetingDate,
+            meetingTime,
+            meetingLocation,
+            notes,
+            startDate,
+            endDate,
+            chatHistory, // <-- Save chatHistory to the database
             renterId: req.user._id,
             ownerId: item.userId,
             paymentMethod,

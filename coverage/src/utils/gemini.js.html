@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/routes/cloudinaryUpload.js</title>
+    <title>Code coverage report for src/utils/gemini.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/routes</a> cloudinaryUpload.js</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/utils</a> gemini.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.59% </span>
+                <span class="strong">22.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>23/54</span>
+                <span class='fraction'>12/54</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.59% </span>
+                <span class="strong">22.22% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>23/54</span>
+                <span class='fraction'>12/54</span>
             </div>
         
             
@@ -129,14 +129,6 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -168,63 +160,71 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// routes/cloudinaryUpload.js
-import express from 'express';
-import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
-import { config } from 'dotenv';
-import streamifier from 'streamifier';
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// src/lib/gemini.js
+import fetch from 'node-fetch'       
+globalThis.fetch = fetch 
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import fs from 'fs';
 &nbsp;
-config(); // Load .env
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 &nbsp;
-const router = express.Router();
-const upload = multer(); // Handles multipart/form-data in memory
+// const models = await genAI.listModels();
+// models.forEach(m =&gt; console.log(m.name));
 &nbsp;
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-&nbsp;
-router.post('/upload-image', upload.single('image'), async (req, res) =&gt; {
-<span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      if (!req.file) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log('&gt; No file received');</span>
-<span class="cstat-no" title="statement not covered" >        return res.status(400).json({ error: 'No file uploaded' });</span>
+export <span class="fstat-no" title="function not covered" >async function analyzeImageFromBase64(base64Image) {</span>
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });</span>
+<span class="cstat-no" title="statement not covered" >    // const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    const result = await model.generateContent([</span>
+<span class="cstat-no" title="statement not covered" >      "THIS IS VERY IMPORTANT TO REMEMBER WHILE GENERATING THE RESPONSE FOR YOU: ALWAYS ANSWER IN THE FOLLOWING FORMAT: {title:'the title of the item',description:'a decription of the item',suggestedPrice:'a suggested daily rate price for the item to be rented out. Don't make it too expensive. should be a number only, don't use any currency symbols',category:'category of the item between Kitchen,Tools,Music,Books,Party &amp; Events, Sports, Photography,Electronics,Other [PICK ONLY ONE FROM THESE]'}",</span>
+<span class="cstat-no" title="statement not covered" >      'Here is the task, please fill the given template as instructed. Analyze this image and provide:',</span>
+<span class="cstat-no" title="statement not covered" >      '1. A concise title (max 50 characters)',</span>
+<span class="cstat-no" title="statement not covered" >      '2. A detailed description (max 200 characters)',</span>
+<span class="cstat-no" title="statement not covered" >      '3. Suggested Price (number only)',</span>
+<span class="cstat-no" title="statement not covered" >      '4. A category (e.g., Electronics, Furniture, Books, etc.)',</span>
+<span class="cstat-no" title="statement not covered" >      {</span>
+<span class="cstat-no" title="statement not covered" >        inlineData: {</span>
+<span class="cstat-no" title="statement not covered" >          data: base64Image,</span>
+<span class="cstat-no" title="statement not covered" >          mimeType: 'image/jpeg'</span>
+<span class="cstat-no" title="statement not covered" >        }</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >      console.log('&gt; File received:', req.file.originalname, req.file.mimetype);</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >      const streamUpload = (fileBuffer) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        return new Promise((resolve, reject) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >          const stream = cloudinary.uploader.upload_stream(</span>
-<span class="cstat-no" title="statement not covered" >            {</span>
-<span class="cstat-no" title="statement not covered" >              folder: 'rentit/uploads'</span>
-<span class="cstat-no" title="statement not covered" >            },</span>
-<span class="cstat-no" title="statement not covered" >            (error, result) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >              if (result) resolve(result);</span>
-<span class="cstat-no" title="statement not covered" >              else reject(error);</span>
-<span class="cstat-no" title="statement not covered" >            }</span>
-<span class="cstat-no" title="statement not covered" >          );</span>
-<span class="cstat-no" title="statement not covered" >          streamifier.createReadStream(fileBuffer).pipe(stream);</span>
-<span class="cstat-no" title="statement not covered" >        });</span>
-<span class="cstat-no" title="statement not covered" >      };</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >      const result = await streamUpload(req.file.buffer);</span>
-<span class="cstat-no" title="statement not covered" >      console.log('&gt; Uploaded to Cloudinary:', result.secure_url);</span>
-<span class="cstat-no" title="statement not covered" >      res.json({ secure_url: result.secure_url });</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
-<span class="cstat-no" title="statement not covered" >      console.error('&gt; Upload failed:', err);</span>
-<span class="cstat-no" title="statement not covered" >      res.status(500).json({ error: 'Failed to upload image', details: err.message });</span>
+<span class="cstat-no" title="statement not covered" >    ]);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    const response = await result.response;</span>
+<span class="cstat-no" title="statement not covered" >    const text = response.text();</span>
+<span class="cstat-no" title="statement not covered" >    console.log("GEMINI TEXT: ",text);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    const match = text.match(/```json\s*([\s\S]*?)\s*```/);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    let data;</span>
+<span class="cstat-no" title="statement not covered" >    if (match) {</span>
+<span class="cstat-no" title="statement not covered" >      const jsonString = match[1];</span>
+<span class="cstat-no" title="statement not covered" >      data = JSON.parse(jsonString);</span>
+<span class="cstat-no" title="statement not covered" >      console.log(data); // now usable as a JS object</span>
+<span class="cstat-no" title="statement not covered" >    } else {</span>
+<span class="cstat-no" title="statement not covered" >      console.log("No JSON found");</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-  });
-&nbsp;
-export default router;
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    const {title, description, suggestedPrice,category} = data//.split('\n').map(line =&gt; line.trim());</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    return { title, description, suggestedPrice, category };</span>
+<span class="cstat-no" title="statement not covered" >  } catch (error) {</span>
+<span class="cstat-no" title="statement not covered" >    console.error('Gemini API error:', error);</span>
+<span class="cstat-no" title="statement not covered" >    throw new Error('Failed to analyze image');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -232,7 +232,7 @@ export default router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-04T06:42:31.837Z
+                at 2025-05-04T06:42:31.804Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

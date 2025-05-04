@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for src/routes/cloudinaryUpload.js</title>
+    <title>Code coverage report for src/config/passport.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/routes</a> cloudinaryUpload.js</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">src/config</a> passport.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.59% </span>
+                <span class="strong">49.12% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>23/54</span>
+                <span class='fraction'>28/57</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.59% </span>
+                <span class="strong">49.12% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>23/54</span>
+                <span class='fraction'>28/57</span>
             </div>
         
             
@@ -117,16 +117,9 @@
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -146,14 +139,15 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -171,68 +165,80 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// routes/cloudinaryUpload.js
-import express from 'express';
-import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
-import { config } from 'dotenv';
-import streamifier from 'streamifier';
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">import 'dotenv/config';
+import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { User } from '../models/User.js';
 &nbsp;
-config(); // Load .env
+// Local username/password
+passport.use(new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password'
+}, async (email, password, done) =&gt; {
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    const user = await User.findOne({ email });</span>
+<span class="cstat-no" title="statement not covered" >    if (!user) return done(null, false, { message: 'User not found' });</span>
+<span class="cstat-no" title="statement not covered" >    const isMatch = await user.comparePassword(password);</span>
+<span class="cstat-no" title="statement not covered" >    if (!isMatch) return done(null, false, { message: 'Incorrect password' });</span>
+<span class="cstat-no" title="statement not covered" >    return done(null, user);</span>
+<span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
+<span class="cstat-no" title="statement not covered" >    return done(err);</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+}));
 &nbsp;
-const router = express.Router();
-const upload = multer(); // Handles multipart/form-data in memory
+// Google OAuth2
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback'
+  },
+  async (accessToken, refreshToken, profile, done) =&gt; {
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      let user = await User.findOne({ googleId: profile.id });</span>
+<span class="cstat-no" title="statement not covered" >      if (!user) {</span>
+<span class="cstat-no" title="statement not covered" >        user = await User.create({</span>
+<span class="cstat-no" title="statement not covered" >          googleId: profile.id,</span>
+<span class="cstat-no" title="statement not covered" >          email: profile.emails[0].value,</span>
+<span class="cstat-no" title="statement not covered" >          name: profile.displayName</span>
+<span class="cstat-no" title="statement not covered" >        });</span>
+<span class="cstat-no" title="statement not covered" >      }</span>
+<span class="cstat-no" title="statement not covered" >      return done(null, user);</span>
+<span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
+<span class="cstat-no" title="statement not covered" >      return done(err);</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+));
 &nbsp;
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+// session persistence
+passport.serializeUser((user, done) =&gt; done(null, user.id));
+passport.deserializeUser(async (id, done) =&gt; {
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    const user = await User.findById(id);</span>
+<span class="cstat-no" title="statement not covered" >    done(null, user);</span>
+<span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
+<span class="cstat-no" title="statement not covered" >    done(err);</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
 });
 &nbsp;
-router.post('/upload-image', upload.single('image'), async (req, res) =&gt; {
-<span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      if (!req.file) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log('&gt; No file received');</span>
-<span class="cstat-no" title="statement not covered" >        return res.status(400).json({ error: 'No file uploaded' });</span>
-<span class="cstat-no" title="statement not covered" >      }</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >      console.log('&gt; File received:', req.file.originalname, req.file.mimetype);</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >      const streamUpload = (fileBuffer) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        return new Promise((resolve, reject) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >          const stream = cloudinary.uploader.upload_stream(</span>
-<span class="cstat-no" title="statement not covered" >            {</span>
-<span class="cstat-no" title="statement not covered" >              folder: 'rentit/uploads'</span>
-<span class="cstat-no" title="statement not covered" >            },</span>
-<span class="cstat-no" title="statement not covered" >            (error, result) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >              if (result) resolve(result);</span>
-<span class="cstat-no" title="statement not covered" >              else reject(error);</span>
-<span class="cstat-no" title="statement not covered" >            }</span>
-<span class="cstat-no" title="statement not covered" >          );</span>
-<span class="cstat-no" title="statement not covered" >          streamifier.createReadStream(fileBuffer).pipe(stream);</span>
-<span class="cstat-no" title="statement not covered" >        });</span>
-<span class="cstat-no" title="statement not covered" >      };</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >      const result = await streamUpload(req.file.buffer);</span>
-<span class="cstat-no" title="statement not covered" >      console.log('&gt; Uploaded to Cloudinary:', result.secure_url);</span>
-<span class="cstat-no" title="statement not covered" >      res.json({ secure_url: result.secure_url });</span>
-<span class="cstat-no" title="statement not covered" >  </span>
-<span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
-<span class="cstat-no" title="statement not covered" >      console.error('&gt; Upload failed:', err);</span>
-<span class="cstat-no" title="statement not covered" >      res.status(500).json({ error: 'Failed to upload image', details: err.message });</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
-  });
-&nbsp;
-export default router;
-&nbsp;</pre></td></tr></table></pre>
+export default passport;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-04T06:42:31.837Z
+                at 2025-05-04T06:42:31.804Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

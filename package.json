@@ -8,7 +8,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "NODE_ENV=test mocha --require dotenv/config --recursive --exit \"test/**/*.test.js\"",
-    "coverage": "NODE_ENV=test nyc --all --include \"src/**/*.js\" --extension .js --reporter=lcov --reporter=text -- mocha --require dotenv/config --recursive --exit \"test/**/*.test.js\""
+    "coverage": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules c8 mocha --require dotenv/config --recursive --exit \"test/**/*.test.js\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.1.3",
@@ -30,27 +30,25 @@
     "streamifier": "^0.1.1"
   },
   "devDependencies": {
+    "c8": "^8.0.0",
     "chai": "^5.2.0",
     "mocha": "^11.2.2",
     "nodemon": "^3.1.9",
-    "nyc": "^17.1.0",
     "sinon": "^20.0.0",
     "supertest": "^7.1.0"
   },
-  "nyc": {
-  "extension": [".js", ".mjs"],
-  "include": ["src/**/*.js"],
-  "exclude": [
-    "test/**",
-    "src/scripts/**",
-    "coverage/**"
-  ],
-  "reporter": ["text", "html", "lcov"],
-  "all": true,
-  "check-coverage": true,
-  "branches": 70,
-  "lines": 80,
-  "functions": 80,
-  "statements": 80
+  "c8": {
+    "exclude": [
+      "test/**",
+      "src/scripts/**",
+      "coverage/**"
+    ],
+    "all": true,
+    "reporter": ["text", "html", "lcov"],
+    "check-coverage": true,
+    "branches": 70,
+    "lines": 80,
+    "functions": 80,
+    "statements": 80
   }
 }

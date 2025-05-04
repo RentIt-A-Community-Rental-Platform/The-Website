@@ -148,9 +148,12 @@ function showRequestDetails(req, role) {
     // Action buttons at the bottom (always right-aligned)
     // Show different buttons based on role and status
     let actionButtons = '';
-    
-    if (role === 'receiver' && req.status === 'pending') {
-        // Owner can accept, reject, or modify pending requests
+
+    if (req.status === 'accepted' || req.status === 'rejected') {
+        // No actions if already accepted or rejected
+        actionButtons = '';
+    } else if (role === 'receiver' && !isLastMessageFromUser) {
+        // Owner can accept, reject, or modify if they didn't make the last modification
         actionButtons = `
             <div class="flex justify-end space-x-4 mt-4">
                 <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
@@ -158,8 +161,8 @@ function showRequestDetails(req, role) {
                 <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req))}')">Modify</button>
             </div>
         `;
-    } else if (role === 'sender' && req.status === 'modified') {
-        // Renter can accept, reject, or modify a modified request
+    } else if (role === 'sender' && !isLastMessageFromUser) {
+        // Renter can accept, reject, or modify if they didn't make the last modification
         actionButtons = `
             <div class="flex justify-end space-x-4 mt-4">
                 <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
@@ -167,19 +170,10 @@ function showRequestDetails(req, role) {
                 <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req))}')">Modify</button>
             </div>
         `;
-    } else if (isLastMessageFromUser) {
-        // If the last message is from the current user, they can only modify
+    } else {
+        // If the user made the last modification, they can only modify again
         actionButtons = `
             <div class="flex justify-end space-x-4 mt-4">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req))}')">Modify</button>
-            </div>
-        `;
-    } else if (req.status !== 'accepted' && req.status !== 'rejected') {
-        // If not accepted or rejected, and not the last sender, can accept, reject, or modify
-        actionButtons = `
-            <div class="flex justify-end space-x-4 mt-4">
-                <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Reject</button>
                 <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req))}')">Modify</button>
             </div>
         `;
@@ -220,45 +214,65 @@ function getStatusTextClass(status) {
 
 // Show the modify form for a request
 function showModifyForm(reqStr) {
-    const req = JSON.parse(decodeURIComponent(reqStr));
-    const container = document.getElementById('modifyFormContainer');
-    container.innerHTML = `
-        <form id="modifyForm" class="mt-4 space-y-2 bg-gray-50 p-4 rounded-lg">
-            <label class="block">Rental Interval:
-                <input type="date" name="startDate" value="${req.rentalPeriod.startDate}" class="border rounded px-2 py-1 mr-2">
-                to
-                <input type="date" name="endDate" value="${req.rentalPeriod.endDate}" class="border rounded px-2 py-1">
-            </label>
-            <label class="block">Meeting Place:
-                <input type="text" name="meetingLocation" value="${req.meetingDetails.location}" class="border rounded px-2 py-1 w-full">
-            </label>
-            <label class="block">Meeting Date:
-                <input type="date" name="meetingDate" value="${req.meetingDetails.date}" class="border rounded px-2 py-1 mr-2">
-                <input type="time" name="meetingTime" value="${req.meetingDetails.time}" class="border rounded px-2 py-1">
-            </label>
-            <label class="block">Notes:
-                <textarea name="notes" class="border rounded px-2 py-1 w-full">${req.meetingDetails.notes || ''}</textarea>
-            </label>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Modification</button>
-        </form>
-    `;
-    document.getElementById('modifyForm').onsubmit = function(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const updated = {
-            rentalPeriod: {
-                startDate: formData.get('startDate'),
-                endDate: formData.get('endDate')
-            },
-            meetingDetails: {
-                location: formData.get('meetingLocation'),
-                date: formData.get('meetingDate'),
-                time: formData.get('meetingTime'),
-                notes: formData.get('notes')
-            }
-        };
-        modifyRequest(req._id, updated);
-    };
+    try {
+        const req = JSON.parse(decodeURIComponent(reqStr));
+        const container = document.getElementById('modifyFormContainer');
+        
+        // Make sure we have valid data before rendering the form
+        if (!req || !req.rentalPeriod || !req.meetingDetails) {
+            console.error('Invalid request data:', req);
+            alert('Error: Invalid request data');
+            return;
+        }
+        
+        container.innerHTML = `
+            <form id="modifyForm" class="mt-4 space-y-2 bg-gray-50 p-4 rounded-lg">
+                <label class="block">Rental Interval:
+                    <input type="date" name="startDate" value="${req.rentalPeriod.startDate}" class="border rounded px-2 py-1 mr-2">
+                    to
+                    <input type="date" name="endDate" value="${req.rentalPeriod.endDate}" class="border rounded px-2 py-1">
+                </label>
+                <label class="block">Meeting Place:
+                    <input type="text" name="meetingLocation" value="${req.meetingDetails.location}" class="border rounded px-2 py-1 w-full">
+                </label>
+                <label class="block">Meeting Date:
+                    <input type="date" name="meetingDate" value="${req.meetingDetails.date}" class="border rounded px-2 py-1 mr-2">
+                    <input type="time" name="meetingTime" value="${req.meetingDetails.time}" class="border rounded px-2 py-1">
+                </label>
+                <label class="block">Notes:
+                    <textarea name="notes" class="border rounded px-2 py-1 w-full">${req.meetingDetails.notes || ''}</textarea>
+                </label>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Modification</button>
+            </form>
+        `;
+        
+        // Add event listener directly to the form
+        const form = document.getElementById('modifyForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const updated = {
+                    rentalPeriod: {
+                        startDate: formData.get('startDate'),
+                        endDate: formData.get('endDate')
+                    },
+                    meetingDetails: {
+                        location: formData.get('meetingLocation'),
+                        date: formData.get('meetingDate'),
+                        time: formData.get('meetingTime'),
+                        notes: formData.get('notes')
+                    }
+                };
+                modifyRequest(req._id, updated);
+            });
+        } else {
+            console.error('Form element not found');
+        }
+    } catch (error) {
+        console.error('Error in showModifyForm:', error);
+        alert('Error: ' + error.message);
+    }
 }
 
 // Accept a rental request via API

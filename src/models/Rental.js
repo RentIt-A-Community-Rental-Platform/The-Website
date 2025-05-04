@@ -20,7 +20,9 @@ const rentalSchema = new mongoose.Schema({
   status:     { type: String, enum: ['pending','accepted','rejected','completed','modified'], default: 'pending' },
   totalPrice: { type: Number, required: true },
   createdAt:  { type: Date, default: Date.now },
-  chatHistory: [ ChatEntrySchema ]
+  chatHistory: [ ChatEntrySchema ],
+  // Add this field to your schema
+  lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
 export const Rental = mongoose.model('Rental', rentalSchema);

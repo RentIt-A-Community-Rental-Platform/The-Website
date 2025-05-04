@@ -157,14 +157,33 @@ router.post('/:id/reject', isAuthenticated, async (req, res) => {
 // Update (modify) a rental request
 router.put('/:id', isAuthenticated, async (req, res) => {
     try {
-        const rental = await Rental.findOne({ _id: req.params.id, ownerId: req.user._id }).populate('itemId').populate('renterId');
+        // Allow modification if user is either owner or renter, and status is not accepted/rejected
+        const rental = await Rental.findOne({ 
+            _id: req.params.id, 
+            $or: [
+                { ownerId: req.user._id },
+                { renterId: req.user._id }
+            ],
+            status: { $nin: ['accepted', 'rejected'] }
+        }).populate('itemId').populate('renterId').populate('ownerId');
+        
         if (!rental) {
             return res.status(404).json({ error: 'Rental request not found or not authorized' });
         }
 
+        // Determine who is modifying
+        let senderType = '';
+        if (String(rental.ownerId._id) === String(req.user._id)) {
+            senderType = 'owner';
+        } else if (String(rental.renterId._id) === String(req.user._id)) {
+            senderType = 'renter';
+        } else {
+            return res.status(403).json({ error: 'Not authorized to modify this request' });
+        }
+
         // Prepare the new chat message
         const chatMsg = {
-            sender: 'owner',
+            sender: senderType,
             type: 'modify',
             timestamp: new Date(),
             rentalPeriod: req.body.rentalPeriod || rental.rentalPeriod,
@@ -184,6 +203,9 @@ router.put('/:id', isAuthenticated, async (req, res) => {
             rental.meetingDetails = req.body.meetingDetails;
         }
         rental.status = 'modified';
+        
+        // Track who last modified the request
+        rental.lastModifiedBy = req.user._id;
 
         await rental.save();
         res.json({ message: 'Rental request modified successfully', rental });

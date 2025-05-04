@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Review Rental Request - RentIt</title>
+    <title>Rental Requests - RentIt</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="bg-gray-50">
     <nav class="bg-white shadow-lg">
@@ -25,43 +26,68 @@
                             <i class="fas fa-comments text-primary-600"></i>
                             <span id="notificationBadge" class="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs rounded-full text-center hidden">0</span>
                         </button>
-                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg py-2 z-50 max-h-96 overflow-y-auto">
-                            <div class="px-4 py-2 font-semibold border-b">Rental Requests</div>
-                            <div id="notificationList" class="divide-y"></div>
-                            <div class="px-4 py-2 text-center text-sm text-gray-500" id="noNotifications">No new requests.</div>
-                        </div>
-                    </div>                    
-                    <!-- User icon for logged in users (hidden by default) -->
-                    <div id="userIconContainer" class="relative">
-                        <button id="userMenuButton" class="flex items-center justify-center h-10 w-10 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
-                            <i class="fas fa-user text-gray-600"></i>
-                        </button>
-                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                            <div id="userDisplayName" class="px-4 py-2 text-sm text-gray-700 border-b"></div>
-                            <a href="/my-listings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Listings</a>
-                            <button id="logoutBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</button>
-                        </div>
                     </div>
-                    
-                    <!-- Login link for logged out users -->
-                    <a href="/auth.html" id="loginLink" class="hidden text-gray-600 hover:text-gray-900">Login</a>
+                    <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
                 </div>
             </div>
         </div>
     </nav>
-    <div class="flex h-screen">
-        <!-- Left: Requests List -->
-        <div class="w-1/3 bg-white border-r overflow-y-auto">
-            <h2 class="text-xl font-bold p-4 border-b">Requests</h2>
-            <div id="requestsList"></div>
-        </div>
-        <!-- Right: Request Details -->
-        <div class="flex-1 p-8">
-            <div id="requestDetails" class="max-w-xl mx-auto">
-                <!-- Details will be loaded here -->
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-6">Rental Requests</h1>
+        
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Sidebar with request lists -->
+            <div class="w-full md:w-1/3 bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Tabs for switching between received and sent requests -->
+                <div class="flex border-b">
+                    <button id="receivedTab" class="flex-1 py-3 font-semibold text-center border-b-2 border-primary-500">Received</button>
+                    <button id="sentTab" class="flex-1 py-3 font-semibold text-center text-gray-500">Sent</button>
+                </div>
+                
+                <!-- Received requests list (visible by default) -->
+                <div id="receivedList" class="overflow-y-auto max-h-[70vh]">
+                    <div id="requestsList" class="divide-y"></div>
+                </div>
+                
+                <!-- Sent requests list (hidden by default) -->
+                <div id="sentList" class="hidden overflow-y-auto max-h-[70vh]">
+                    <div id="myRequestsList" class="divide-y"></div>
+                </div>
+            </div>
+            
+            <!-- Request details panel -->
+            <div class="w-full md:w-2/3">
+                <div id="requestDetails" class="bg-white rounded-lg shadow-md p-6">
+                    <div class="text-center text-gray-500 py-12">
+                        <i class="fas fa-comments text-5xl mb-4 text-gray-300"></i>
+                        <p>Select a request to view details</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
     <script src="/review-request.js"></script>
+    <script>
+        // Tab switching functionality
+        document.getElementById('receivedTab').addEventListener('click', function() {
+            document.getElementById('receivedList').classList.remove('hidden');
+            document.getElementById('sentList').classList.add('hidden');
+            this.classList.add('border-b-2', 'border-primary-500');
+            this.classList.remove('text-gray-500');
+            document.getElementById('sentTab').classList.remove('border-b-2', 'border-primary-500');
+            document.getElementById('sentTab').classList.add('text-gray-500');
+        });
+        
+        document.getElementById('sentTab').addEventListener('click', function() {
+            document.getElementById('sentList').classList.remove('hidden');
+            document.getElementById('receivedList').classList.add('hidden');
+            this.classList.add('border-b-2', 'border-primary-500');
+            this.classList.remove('text-gray-500');
+            document.getElementById('receivedTab').classList.remove('border-b-2', 'border-primary-500');
+            document.getElementById('receivedTab').classList.add('text-gray-500');
+        });
+    </script>
 </body>
 </html>

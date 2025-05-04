@@ -366,7 +366,7 @@ function refreshUI() {
 // Poll for notifications
 function pollNotifications() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (!token) return;
+    // if (!token) return;
 
     // Fetch requests where user is owner (receiver)
     fetch(`${API_URL}/rentals/pending`, {
@@ -374,7 +374,11 @@ function pollNotifications() {
     })
     .then(res => res.json())
     .then(ownerRequests => {
-        requests = ownerRequests;
+        // requests = ownerRequests;
+        if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
+            console.log('new msg owner');
+            requests = ownerRequests;
+        }
         renderRequestsList(ownerRequests);
     });
 
@@ -384,9 +388,21 @@ function pollNotifications() {
     })
     .then(res => res.json())
     .then(senderRequests => {
-        myRequests = senderRequests;
+        
         renderSenderRequestsList(senderRequests);
+
+        if (JSON.stringify(myRequests) !== JSON.stringify(senderRequests)){
+            myRequests.forEach((item,index)=>{
+                if(JSON.stringify(myRequests[index])!==JSON.stringify(senderRequests[index])){
+                    showRequestDetails(senderRequests[index], 'sender');
+                }
+            })
+            
+            myRequests = senderRequests;
+        }
+
     });
+
 }
 
 // Initialize the page
@@ -400,14 +416,14 @@ window.onload = async function() {
     renderSenderRequestsList(myRequests);
     
     // Show details for the first request if available
-    if (requests.length > 0) {
-        selectedRequestId = requests[0]._id;
-        showRequestDetails(requests[0], 'receiver');
-    } else if (myRequests.length > 0) {
-        selectedRequestId = myRequests[0]._id;
-        showRequestDetails(myRequests[0], 'sender');
-    }
+    // if (requests.length > 0) {
+    //     selectedRequestId = requests[0]._id;
+    //     showRequestDetails(requests[0], 'receiver');
+    // } else if (myRequests.length > 0) {
+    //     selectedRequestId = myRequests[0]._id;
+    //     showRequestDetails(myRequests[0], 'sender');
+    // }
     
     // Set up polling for updates
-    setInterval(pollNotifications, 10000);
+    setInterval(pollNotifications, 5000);
 };

@@ -65,13 +65,26 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rentit')
-  .then(() => console.log('> Connected to MongoDB successfully!'))
+// Connect to MongoDB (use TEST URI when running tests)
+const mongoURI = process.env.NODE_ENV === 'test'
+  ? process.env.MONGODB_TEST_URI
+  : (process.env.MONGODB_URI || 'mongodb://localhost/rentit');
+
+if (process.env.NODE_ENV === 'test' && !process.env.MONGODB_TEST_URI) {
+  console.error('✖  MONGODB_TEST_URI must be set when NODE_ENV=test');
+  process.exit(1);
+}
+
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log(`> Connected to MongoDB (${process.env.NODE_ENV})`))
   .catch(err => {
     console.error('> MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 // Initialize Gemini
 // setupGemini();
@@ -143,13 +156,18 @@ app.use('/rentals', rentalRoutes);
 const PORT = process.env.PORT || 3000;
 const serverUrl = `http://localhost:${PORT}`;
 
-app.listen(PORT, () => {
-  console.log('\n> Server is running!');
-  console.log('> Available endpoints:');
-  console.log(`   - ${serverUrl}/items`);
-  console.log(`   - ${serverUrl}/auth/google`);
-  console.log(`   - ${serverUrl}/dashboard`);
-  console.log('\n> Open in browser:');
-  console.log(`   ${serverUrl}`);
-  console.log('\n> Watching for changes...');
-});
+// Only start the server if not in test mode
+if (process.env.NODE_ENV !== 'test' && process.env.TEST_MODE !== 'true') {
+  app.listen(PORT, () => {
+    console.log('\n> Server is running!');
+    console.log('> Available endpoints:');
+    console.log(`   - ${serverUrl}/items`);
+    console.log(`   - ${serverUrl}/auth/google`);
+    console.log(`   - ${serverUrl}/dashboard`);
+    console.log('\n> Open in browser:');
+    console.log(`   ${serverUrl}`);
+    console.log('\n> Watching for changes...');
+  });
+} else {
+  console.log('\n> Running in test mode - server not started');
+}

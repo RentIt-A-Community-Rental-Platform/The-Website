@@ -1,51 +1,67 @@
+// test/auth.test.js
+
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import request from 'supertest';
-import app from '../src/index.js';
+
+import express from 'express';
+import session from 'express-session';
+import passport from '../src/config/passport.js';
+import { authRoutes } from '../src/routes/auth.js';
 import { User } from '../src/models/User.js';
 
-// Set up Mongoose connection management for tests
+// ─── Build a standalone test app ───────────────────────────────────────────────
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'keyboard_cat',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false },
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+app.use('/auth', authRoutes);
+
+// ─── Global DB setup / teardown with MONGODB_TEST_URI only ─────────────────────
 before(async function() {
-  this.timeout(15000); // Increase timeout for connection
-  
-  try {
-    // Use default test URI if environment variable isn't available
-    const mongoURI = process.env.MONGODB_TEST_URI || 'mongodb://127.0.0.1:27017/university-rental-platform-test';
-    
-    // Connect with proper error handling
+  this.timeout(15000);
+
+  const mongoURI = process.env.MONGODB_TEST_URI;
+  if (!mongoURI) {
+    throw new Error('Please set MONGODB_TEST_URI in your environment for tests');
+  }
+
+  if (mongoose.connection.readyState === 0) {
     await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('MongoDB Test Connection Successful');
-  } catch (error) {
-    console.error('MongoDB Test Connection Error:', error);
-    throw error; // Rethrow to fail the tests
   }
 });
 
 after(async function() {
-  this.timeout(10000); // Increase timeout for disconnection
-  
-  try {
-    await mongoose.connection.close();
-    console.log('MongoDB Test Connection Closed');
-  } catch (error) {
-    console.error('MongoDB Test Disconnection Error:', error);
-    throw error;
+  this.timeout(10000);
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
   }
 });
 
-describe('Auth Routes', () => {
+// ─── Tests ──────────────────────────────────────────────────────────────────
+describe('Auth Routes', function() {
   const email = 'auth@test.com';
   const password = 'secret123';
 
   beforeEach(async () => {
-    // Clear out users between specs
-    await User.deleteMany({});
+    if (process.env.NODE_ENV === 'test') {
+      await User.deleteMany({});
+    }
   });
 
   describe('POST /auth/register', () => {
@@ -62,92 +78,85 @@ describe('Auth Routes', () => {
     });
 
     it('should reject duplicate email registration', async () => {
-      // first registration
-      await request(app).post('/auth/register').send({ email, password, name: 'AuthUser' });
-      // second attempt
+      await request(app)
+        .post('/auth/register')
+        .send({ email, password, name: 'AuthUser' });
+
       const res = await request(app)
         .post('/auth/register')
         .send({ email, password, name: 'AuthUser' });
 
-      expect(res.status).to.be.oneOf([400, 409, 500]);
+      expect(res.status).to.be.oneOf([400, 409]);
     });
   });
 
   describe('Authentication Edge Cases', () => {
-    it('should reject registration with missing email', async () => {
+    it('rejects missing email', async () => {
       const res = await request(app)
         .post('/auth/register')
-        .send({ password: 'secret123', name: 'MissingEmail' });
-      
+        .send({ password, name: 'NoEmail' });
       expect(res.status).to.equal(400);
     });
-    
-    it('should reject registration with invalid email format', async () => {
+
+    it('rejects invalid email format', async () => {
       const res = await request(app)
         .post('/auth/register')
-        .send({ email: 'not-an-email', password: 'secret123', name: 'InvalidEmail' });
-      
+        .send({ email: 'bad', password, name: 'BadEmail' });
       expect(res.status).to.equal(400);
     });
-    
-    it('should reject registration with short password', async () => {
+
+    it('rejects too-short password', async () => {
       const res = await request(app)
         .post('/auth/register')
-        .send({ email: 'short@test.com', password: 'short', name: 'ShortPass' });
-      
+        .send({ email: 'short@t.com', password: '123', name: 'ShortPass' });
       expect(res.status).to.equal(400);
     });
   });
 
   describe('POST /auth/login', () => {
     beforeEach(async () => {
-      // seed a user for login
       const hash = await bcrypt.hash(password, 10);
       await User.create({ email, password: hash, name: 'AuthUser' });
     });
 
-    it.skip('should log in with correct credentials', async () => {
+    it.skip('logs in with correct credentials', async () => {
       const res = await request(app)
         .post('/auth/login')
         .send({ email, password });
-
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property('token').that.is.a('string');
       expect(res.body.user.email).to.equal(email);
     });
 
-    it('should reject login with wrong password', async () => {
+    it('rejects wrong password', async () => {
       const res = await request(app)
         .post('/auth/login')
-        .send({ email, password: 'wrongpass' });
-
+        .send({ email, password: 'wrong' });
       expect(res.status).to.equal(401);
     });
 
-    it('should reject login for non-existent user', async () => {
-      // wipe users
-      await User.deleteMany({});
+    it('rejects non-existent user', async () => {
+      if (process.env.NODE_ENV === 'test') {
+        await User.deleteMany({});
+      }
       const res = await request(app)
         .post('/auth/login')
         .send({ email, password });
-
       expect(res.status).to.equal(401);
     });
   });
 
   describe('GET /auth/me (session-based)', () => {
-    it('should return 401 when not authenticated', async () => {
+    it('returns 401 when not authenticated', async () => {
       const res = await request(app).get('/auth/me');
       expect(res.status).to.equal(401);
     });
-    // session-based tests would go here if you set up supertest with cookies
   });
 
   describe('GET /auth/status (token-based)', () => {
     let token;
 
     beforeEach(async () => {
-      // seed & generate token
       const hash = await bcrypt.hash(password, 10);
       const user = await User.create({ email, password: hash, name: 'AuthUser' });
       token = jwt.sign(
@@ -157,17 +166,16 @@ describe('Auth Routes', () => {
       );
     });
 
-    it('should report not authenticated without token', async () => {
+    it('reports not authenticated without token', async () => {
       const res = await request(app).get('/auth/status');
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property('isAuthenticated', false);
     });
 
-    it('should report authenticated with valid token', async () => {
+    it('reports authenticated with valid token', async () => {
       const res = await request(app)
         .get('/auth/status')
         .set('Authorization', `Bearer ${token}`);
-
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property('isAuthenticated', true);
       expect(res.body.user).to.include({ email });

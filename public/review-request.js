@@ -158,7 +158,6 @@ function showRequestDetails(req, role) {
                 <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
             </div>
         `;
-        console.log("A: ",encodeURIComponent(JSON.stringify(req)));
     } else if (role === 'sender' && req.status === 'modified') {
         // Renter can accept, reject, or modify a modified request
         actionButtons = `
@@ -168,7 +167,6 @@ function showRequestDetails(req, role) {
                 <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
             </div>
         `;
-        console.log("A: ",encodeURIComponent(JSON.stringify(req)));
 
     } else if (isLastMessageFromUser) {
         // If the last message is from the current user, they can only modify
@@ -178,7 +176,6 @@ function showRequestDetails(req, role) {
             </div>
         `;
         
-        console.log("C: ",encodeURIComponent(JSON.stringify(req)));
     } else if (req.status !== 'accepted' && req.status !== 'rejected') {
         // If not accepted or rejected, and not the last sender, can accept, reject, or modify
         actionButtons = `
@@ -322,7 +319,7 @@ async function modifyRequest(id, updated) {
         });
         if (!res.ok) throw new Error('Failed to modify request');
         const data = await res.json();
-        
+        console.log(data);
         // Update the request in the local arrays
         updateRequestInList(data.rental);
         
@@ -397,7 +394,7 @@ window.onload = async function() {
     // Fetch both types of requests
     requests = await fetchRequests();
     myRequests = await fetchMyRequests();
-    
+    console.log(requests, myRequests);
     // Render both lists
     renderRequestsList(requests);
     renderSenderRequestsList(myRequests);

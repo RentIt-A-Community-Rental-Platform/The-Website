@@ -1,3 +1,5 @@
 node_modules/
 .env
 .DS_Storecoverage/
+.DS_Store
+**/.DS_Store

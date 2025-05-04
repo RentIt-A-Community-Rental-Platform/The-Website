@@ -102,6 +102,22 @@ router.get('/pending', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get all rental requests where the user is the sender (renter)
+router.get('/my-requests', isAuthenticated, async (req, res) => {
+    try {
+        const myRequests = await Rental.find({ 
+            renterId: req.user._id 
+        })
+        .populate('itemId')
+        .populate('ownerId');
+    
+        res.json(myRequests);
+    } catch (error) {
+        console.error('Error fetching my rental requests:', error);
+        res.status(500).json({ error: 'Failed to fetch my rental requests' });
+    }
+});
+
 // Accept a rental request
 router.post('/:id/accept', isAuthenticated, async (req, res) => {
     try {
@@ -141,7 +157,7 @@ router.post('/:id/reject', isAuthenticated, async (req, res) => {
 // Update (modify) a rental request
 router.put('/:id', isAuthenticated, async (req, res) => {
     try {
-        const rental = await Rental.findOne({ _id: req.params.id, ownerId: req.user._id });
+        const rental = await Rental.findOne({ _id: req.params.id, ownerId: req.user._id }).populate('itemId').populate('renterId');
         if (!rental) {
             return res.status(404).json({ error: 'Rental request not found or not authorized' });
         }

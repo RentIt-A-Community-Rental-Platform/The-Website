@@ -139,17 +139,25 @@ app.use((err, req, res, next) => {
 // Register routes
 app.use('/rentals', rentalRoutes);
 
-// Start server
-const PORT = process.env.PORT || 3000;
-const serverUrl = `http://localhost:${PORT}`;
+// // Start server
+// const PORT = process.env.PORT || 3000;
+// const serverUrl = `http://localhost:${PORT}`;
 
+// app.listen(PORT, () => {
+//   console.log('\n> Server is running!');
+//   console.log('> Available endpoints:');
+//   console.log(`   - ${serverUrl}/items`);
+//   console.log(`   - ${serverUrl}/auth/google`);
+//   console.log(`   - ${serverUrl}/dashboard`);
+//   console.log('\n> Open in browser:');
+//   console.log(`   ${serverUrl}`);
+//   console.log('\n> Watching for changes...');
+// });
+
+export default app;
+
+// then start listening (this will still run if you do `node src/index.js`)
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('\n> Server is running!');
-  console.log('> Available endpoints:');
-  console.log(`   - ${serverUrl}/items`);
-  console.log(`   - ${serverUrl}/auth/google`);
-  console.log(`   - ${serverUrl}/dashboard`);
-  console.log('\n> Open in browser:');
-  console.log(`   ${serverUrl}`);
-  console.log('\n> Watching for changes...');
+  console.log(`> Server listening on http://localhost:${PORT}`);
 });

@@ -374,12 +374,22 @@ function pollNotifications() {
     })
     .then(res => res.json())
     .then(ownerRequests => {
-        // requests = ownerRequests;
+        // // requests = ownerRequests;
+        // if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
+        //     console.log('new msg owner');
+        //     requests = ownerRequests;
+        // }
+        renderRequestsList(ownerRequests);
+
         if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
-            console.log('new msg owner');
+            requests.forEach((item,index)=>{
+                if(JSON.stringify(requests[index])!==JSON.stringify(ownerRequests[index])){
+                    showRequestDetails(ownerRequests[index], 'receiver');
+                }
+            })
+            
             requests = ownerRequests;
         }
-        renderRequestsList(ownerRequests);
     });
 
     // Fetch requests where user is renter (sender)

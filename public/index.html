@@ -177,36 +177,6 @@
         document.getElementById('notificationBtn').addEventListener('click', () => {
             document.getElementById('notificationDropdown').classList.toggle('hidden');
         });
-        // function renderNotifications(requests) {
-        //         const list = document.getElementById('notificationList');
-        //         list.innerHTML = '';
-        //         if (requests.length === 0) {
-        //             document.getElementById('noNotifications').classList.remove('hidden');
-        //             return;
-        //         }
-        //         document.getElementById('noNotifications').classList.add('hidden');
-        //         requests.forEach(req => {
-        //             const div = document.createElement('div');
-        //             div.className = 'p-4 flex justify-between items-center';
-        //             div.innerHTML = `
-        //                 <div>
-        //                     <span class="font-semibold">${req.itemTitle}</span>
-        //                     <span class="text-gray-500 text-sm">by ${req.requesterName}</span>
-        //                 </div>
-        //                 <button class="review-btn px-3 py-1 bg-primary-500 text-white rounded" data-id="${req._id}">
-        //                     Review
-        //                 </button>
-        //             `;
-        //             list.appendChild(div);
-        //         });
-        //         // Add event listeners for review buttons
-        //         list.querySelectorAll('.review-btn').forEach(btn => {
-        //             btn.addEventListener('click', (e) => {
-        //                 const id = e.target.getAttribute('data-id');
-        //                 window.location.href = `/review-request.html?id=${id}`;
-        //             });
-        //         });
-        //     }
         // Fetch and render rental requests (replace with your API logic)
         async function loadNotifications() {
             // Example: Fetch rental requests for the logged-in user

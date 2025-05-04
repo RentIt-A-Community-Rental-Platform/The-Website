@@ -78,11 +78,14 @@ function calculateTotalPrice(dailyRate, startDate, endDate, deposit) {
 // Get all pending rental requests for the current user (as owner)
 router.get('/pending', isAuthenticated, async (req, res) => {
     try {
-        const pendingRequests = await Rental.find({ ownerId: req.user._id, status: 'pending' })
-            .populate('itemId')
-            .populate('renterId');
-
-        res.json(pendingRequests);
+        const allRequests = await Rental.find({ 
+            ownerId: req.user._id, 
+            status: { $in: ['pending', 'modified', 'accepted', 'rejected', 'completed'] }
+        })
+        .populate('itemId')
+        .populate('renterId');
+    
+        res.json(allRequests);
     } catch (error) {
         console.error('Error fetching pending rental requests:', error);
         res.status(500).json({ error: 'Failed to fetch pending rental requests' });
@@ -122,6 +125,45 @@ router.post('/:id/reject', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error rejecting rental request:', error);
         res.status(500).json({ error: 'Failed to reject rental request' });
+    }
+});
+
+// Update (modify) a rental request
+router.put('/:id', isAuthenticated, async (req, res) => {
+    try {
+        const rental = await Rental.findOne({ _id: req.params.id, ownerId: req.user._id });
+        if (!rental) {
+            return res.status(404).json({ error: 'Rental request not found or not authorized' });
+        }
+
+        // Prepare the new chat message
+        const chatMsg = {
+            sender: 'owner',
+            type: 'modify',
+            timestamp: new Date(),
+            rentalPeriod: req.body.rentalPeriod || rental.rentalPeriod,
+            meetingDetails: req.body.meetingDetails || rental.meetingDetails,
+            message: req.body.meetingDetails?.notes || ''
+        };
+
+        // Append to chatHistory
+        rental.chatHistory = rental.chatHistory || [];
+        rental.chatHistory.push(chatMsg);
+
+        // Optionally update the main fields for convenience
+        if (req.body.rentalPeriod) {
+            rental.rentalPeriod = req.body.rentalPeriod;
+        }
+        if (req.body.meetingDetails) {
+            rental.meetingDetails = req.body.meetingDetails;
+        }
+        rental.status = 'modified';
+
+        await rental.save();
+        res.json({ message: 'Rental request modified successfully', rental });
+    } catch (error) {
+        console.error('Error modifying rental request:', error);
+        res.status(500).json({ error: 'Failed to modify rental request' });
     }
 });
 

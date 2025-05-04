@@ -199,7 +199,26 @@ async function submitRentalRequest(e) {
                 meetingLocation,
                 notes: meetingNotes,
                 startDate,
-                endDate
+                endDate,
+                // Add chatHistory with the initial message from the renter
+                chatHistory: [
+                    {
+                        sender: 'renter',
+                        type: 'request',
+                        timestamp: new Date().toISOString(),
+                        rentalPeriod: {
+                            startDate,
+                            endDate
+                        },
+                        meetingDetails: {
+                            location: meetingLocation,
+                            date: meetingDate,
+                            time: meetingTime,
+                            notes: meetingNotes
+                        },
+                        message: 'Rental request sent'
+                    }
+                ]
             })
         });
 

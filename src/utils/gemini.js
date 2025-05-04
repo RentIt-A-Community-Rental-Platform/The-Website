@@ -1,4 +1,6 @@
 // src/lib/gemini.js
+import fetch from 'node-fetch'       
+globalThis.fetch = fetch 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs';
 

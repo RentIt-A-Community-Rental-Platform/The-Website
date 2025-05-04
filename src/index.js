@@ -49,33 +49,38 @@ app.get('/api', (req, res) => {
     message: 'University Rentals API is running!',
     timestamp: new Date().toISOString(),
     endpoints: {
-      items: {
-        list: '/items',
-        create: '/items',
-        update: '/items/:id',
-        delete: '/items/:id'
-      },
-      auth: {
-        login: '/auth/login',
-        register: '/auth/register',
-        google: '/auth/google',
-        logout: '/auth/logout'
-      }
+      items: { list: '/items', create: '/items', update: '/items/:id', delete: '/items/:id' },
+      auth: { login: '/auth/login', register: '/auth/register', google: '/auth/google', logout: '/auth/logout' }
     }
   });
 });
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rentit')
-  .then(() => console.log('> Connected to MongoDB successfully!'))
-  .catch(err => {
-    console.error('> MongoDB connection error:', err);
-    process.exit(1);
-  });
+// Connect to MongoDB (skip auto-connect during tests)
+if (process.env.NODE_ENV !== 'test') {
+  const mongoUri =
+    process.env.NODE_ENV === 'test'
+      ? process.env.MONGODB_TEST_URI
+      : process.env.MONGODB_URI || 'mongodb://localhost/rentit';
 
-// Initialize Gemini
-// setupGemini();
-
+  mongoose
+    .connect(mongoUri, {
+      useNewUrlParser:    true,
+      useUnifiedTopology: true,
+    })
+    .then(async () => {
+      console.log(`> Connected to MongoDB: ${mongoUri}`);
+      try {
+        await mongoose.model('User').syncIndexes();
+        console.log('✅ User indexes are in sync');
+      } catch (err) {
+        console.error('❌ Error syncing User indexes:', err);
+      }
+    })
+    .catch(err => {
+      console.error('> MongoDB connection error:', err);
+      process.exit(1);
+    });
+} 
 // Ensure uploads directory exists
 try {
   mkdirSync(join(__dirname, 'uploads'), { recursive: true });
@@ -88,14 +93,12 @@ try {
 app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
 app.use('/rentals', rentalRoutes);
-app.use('/api', cloudinaryUpload); // /api/upload-image
-app.use('/api/gemini', geminiRoutes); //api for gemini
+app.use('/api', cloudinaryUpload);
+app.use('/api/gemini', geminiRoutes);
 
 // Protected dashboard example
 app.get('/dashboard', (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.redirect('/auth.html');
-  }
+  if (!req.isAuthenticated()) return res.redirect('/auth.html');
   res.send(`
     <h1>Welcome, ${req.user?.name || req.user?.displayName || 'User'}</h1>
     <p>You're logged in!</p>
@@ -104,60 +107,24 @@ app.get('/dashboard', (req, res) => {
   `);
 });
 
-// Google OAuth callback handler (if using root as callback)
-// Uncomment if you want the callback at root level
-/* 
-app.get('/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/auth.html' }),
-  (req, res) => {
-    res.redirect('/');
-  }
-);
-*/
-
-// Fallback to login page for root URL
-app.get('/dashboard', (req, res) => res.redirect('/auth.html'));
+// Fallback login redirect
+app.get('/', (req, res) => res.redirect('/auth.html'));
 
 // 404 handler
-app.use((req, res, next) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: 'The requested resource does not exist'
-  });
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found', message: 'The requested resource does not exist' });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('> Error:', err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: err.message,
-    timestamp: new Date().toISOString()
-  });
+  res.status(500).json({ error: 'Something went wrong!', message: err.message, timestamp: new Date().toISOString() });
 });
-
-// Register routes
-app.use('/rentals', rentalRoutes);
-
-// // Start server
-// const PORT = process.env.PORT || 3000;
-// const serverUrl = `http://localhost:${PORT}`;
-
-// app.listen(PORT, () => {
-//   console.log('\n> Server is running!');
-//   console.log('> Available endpoints:');
-//   console.log(`   - ${serverUrl}/items`);
-//   console.log(`   - ${serverUrl}/auth/google`);
-//   console.log(`   - ${serverUrl}/dashboard`);
-//   console.log('\n> Open in browser:');
-//   console.log(`   ${serverUrl}`);
-//   console.log('\n> Watching for changes...');
-// });
 
 export default app;
 
-// then start listening (this will still run if you do `node src/index.js`)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`> Server listening on http://localhost:${PORT}`);
-});
+// Start server when not testing
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`> Server listening on http://localhost:${PORT}`));
+}

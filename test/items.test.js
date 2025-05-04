@@ -2,6 +2,7 @@
 
 import 'dotenv/config';
 import mongoose from 'mongoose';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import request from 'supertest';
 
@@ -14,7 +15,6 @@ import { Item } from '../src/models/Item.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-// ─── Build a standalone test app ───────────────────────────────────────────────
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -30,62 +30,65 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use('/items', itemRoutes);
 
-// ─── Global DB setup / teardown with MONGODB_TEST_URI only ─────────────────────
+let token;
+let seededUser;
+let findByIdStub;
+
 before(async function() {
   this.timeout(15000);
-
-  const mongoURI = process.env.MONGODB_TEST_URI;
-  if (!mongoURI) {
-    throw new Error('Please set MONGODB_TEST_URI in your environment for tests');
-  }
-
+  const uri = process.env.MONGODB_TEST_URI;
+  if (!uri) throw new Error('MONGODB_TEST_URI must be set for tests');
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(mongoURI, {
+    await mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
   }
-});
 
-after(async function() {
-  this.timeout(10000);
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.disconnect();
-  }
-});
+  // Clear collections
+  await User.deleteMany({});
+  await Item.deleteMany({});
 
-// ─── Seed a user & JWT (with cleanup) ─────────────────────────────────────────
-let token;
-before(async () => {
-  // Clear out any existing test users first
-  if (process.env.NODE_ENV === 'test') {
-    await User.deleteMany({});
-  }
-
-  // Create a fresh test user
+  // Seed one user
   const hash = await bcrypt.hash('pass123', 10);
-  const user = await User.create({
+  seededUser = await User.create({
     email: 'item@test.com',
     password: hash,
     name: 'ItemUser',
   });
 
-  // Generate a valid JWT for bearer auth
+  // Generate a JWT for that user (id as string)
   token = jwt.sign(
-    { _id: user._id, email: user.email },
+    { id: seededUser._id.toString(), email: seededUser.email },
     process.env.JWT_SECRET || 'your-jwt-secret-key',
     { expiresIn: '7d' }
   );
+
+  // Stub User.findById so our auth middleware always finds this user
+  findByIdStub = sinon
+    .stub(User, 'findById')
+    .callsFake((id) =>
+      id.toString() === seededUser._id.toString()
+        ? Promise.resolve(seededUser)
+        : User.collection.findOne({ _id: id })
+    );
 });
 
-// ─── Clean items before each test ───────────────────────────────────────────────
-beforeEach(async () => {
-  if (process.env.NODE_ENV === 'test') {
-    await Item.deleteMany({});
+after(async function() {
+  // Restore stub
+  if (findByIdStub && findByIdStub.restore) {
+    findByIdStub.restore();
+  }
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
   }
 });
 
-// ─── Tests ──────────────────────────────────────────────────────────────────────
+beforeEach(async () => {
+  // Clear items before each test
+  await Item.deleteMany({});
+});
+
 describe('Items Routes', function() {
   it('GET /items → 200 & empty array', async () => {
     const res = await request(app).get('/items');
@@ -96,29 +99,48 @@ describe('Items Routes', function() {
   it('POST /items without token → 401 or 403', async () => {
     const res = await request(app)
       .post('/items')
-      .send({ title: 'NoAuth', description: 'X', price: 10 });
+      .send({ title: 'NoAuth', description: 'X', price: 10, deposit: 0, category: 'misc' });
     expect(res.status).to.be.oneOf([401, 403]);
   });
 
   it('POST /items with valid token → 201 & item object', async () => {
-    const payload = { title: 'Test Item', description: 'Desc', price: 100 };
+    const payload = {
+      title: 'Test Item',
+      description: 'Desc',
+      price: 100,
+      deposit: 0,
+      category: 'misc',
+      photos: []
+    };
+
     const res = await request(app)
       .post('/items')
       .set('Authorization', `Bearer ${token}`)
       .send(payload);
 
     expect(res.status).to.equal(201);
-    expect(res.body).to.include.keys('_id', 'title', 'description', 'price', 'userId');
+    expect(res.body).to.include.keys(
+      '_id',
+      'title',
+      'description',
+      'price',
+      'userId'
+    );
   });
 
   it('GET /items after create → returns array with one item', async () => {
-    // Create one item
     await request(app)
       .post('/items')
       .set('Authorization', `Bearer ${token}`)
-      .send({ title: 'Second', description: 'Desc2', price: 456 });
+      .send({
+        title: 'Second',
+        description: 'Desc2',
+        price: 456,
+        deposit: 0,
+        category: 'misc',
+        photos: []
+      });
 
-    // Fetch items
     const res = await request(app)
       .get('/items')
       .set('Authorization', `Bearer ${token}`);

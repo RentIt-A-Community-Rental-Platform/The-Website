@@ -1,17 +1,23 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
+import path from 'path';
+import fs from 'fs';
 
 describe('list.js frontend behavior', () => {
-  let jsdom, window, sandbox, navigationCalls;
+  let jsdom, window, document, sandbox, navigations;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset navigation tracking
-    navigationCalls = [];
+    navigations = [];
     
+    // Create a basic DOM structure
     jsdom = new JSDOM(`
       <!DOCTYPE html>
       <html>
+        <head>
+          <title>Item Listing</title>
+        </head>
         <body>
           <form id="itemForm"></form>
           <div id="itemsList"></div>
@@ -19,16 +25,17 @@ describe('list.js frontend behavior', () => {
         </body>
       </html>
     `, { 
-      url: 'http://localhost/',
+      url: 'http://localhost/list.html',
       runScripts: 'dangerously',
-      resources: 'usable'
+      resources: 'usable',
+      pretendToBeVisual: true
     });
-  
-    window = jsdom.window;
-    global.window = window;
-    global.document = window.document;
     
-    // Create a custom localStorage mock
+    // Set up globals
+    global.window = jsdom.window;
+    global.document = jsdom.window.document;
+    
+    // Create localStorage mock
     global.localStorage = {
       _data: {},
       getItem: function(key) {
@@ -44,28 +51,32 @@ describe('list.js frontend behavior', () => {
         this._data = {};
       }
     };
-  
+    
+    // Create a sandbox for sinon stubs
     sandbox = sinon.createSandbox();
     
-    // Store the original location object
-    const originalLocation = window.location;
+    // Mock fetch before we load the script
+    global.fetch = sandbox.stub();
+    global.fetch.resolves({
+      ok: true,
+      json: () => Promise.resolve([])
+    });
     
-    // Delete the location property so we can redefine it
-    delete window.location;
-    
-    // Create a new location object with our custom implementation
-    window.location = {
-      ...originalLocation,
-      href: originalLocation.href,
-      replace: function(url) {
-        navigationCalls.push(url);
-      }
-    };
-    
-    // Mock fetch to prevent actual network requests
-    global.fetch = sandbox.stub().resolves({
-      json: () => Promise.resolve([]),
-      ok: true
+    // Create a proper location mock that actually works with JSDOM
+    // Store navigation changes instead of actually navigating
+    const originalHref = jsdom.window.location.href;
+    Object.defineProperty(jsdom.window, 'location', {
+      value: {
+        href: originalHref,
+        toString: () => originalHref,
+        replace: function(url) {
+          navigations.push(url);
+        },
+        assign: function(url) {
+          navigations.push(url);
+        }
+      },
+      writable: true
     });
   });
   
@@ -78,56 +89,81 @@ describe('list.js frontend behavior', () => {
   });
 
   it('redirects to auth.html if no token is found', async () => {
-    // Import the actual list.js module
-    await import('../../public/list.js');
+    // Ensure localStorage has no token
+    global.localStorage.removeItem('token');
     
-    // Check if navigation to auth.html occurred
-    expect(navigationCalls.includes('auth.html')).to.be.true;
+    // Now load the module
+    const listJsContent = fs.readFileSync(path.resolve(process.cwd(), 'public/list.js'), 'utf8');
+    const scriptElement = jsdom.window.document.createElement('script');
+    scriptElement.textContent = listJsContent;
+    jsdom.window.document.head.appendChild(scriptElement);
+    
+    // Wait for any promises to resolve
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    // Check if navigation was triggered
+    expect(navigations.includes('auth.html')).to.be.true;
   });
   
   it('does not redirect if token exists', async () => {
-    // Set a token in localStorage
-    global.localStorage.setItem('token', 'mockToken');
+    // Set a mock token
+    global.localStorage.setItem('token', 'fake-token-12345');
     
-    // Import the actual list.js module
-    await import('../../public/list.js');
+    // Set up fetch to return empty array
+    global.fetch.resolves({
+      ok: true,
+      json: () => Promise.resolve([])
+    });
     
-    // Verify no redirect happened
-    expect(navigationCalls.includes('auth.html')).to.be.false;
+    // Load the script
+    const listJsContent = fs.readFileSync(path.resolve(process.cwd(), 'public/list.js'), 'utf8');
+    const scriptElement = jsdom.window.document.createElement('script');
+    scriptElement.textContent = listJsContent;
+    jsdom.window.document.head.appendChild(scriptElement);
+    
+    // Wait for any promises to resolve
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    // Check that no redirect happened
+    expect(navigations.includes('auth.html')).to.be.false;
   });
 
   it('loads and renders items', async () => {
-    // Set a token in localStorage
-    global.localStorage.setItem('token', 'mockToken');
+    // Set a mock token
+    global.localStorage.setItem('token', 'fake-token-12345');
     
-    // Configure fetch to return mock data
-    global.fetch = sandbox.stub().resolves({
+    // Mock fetch to return sample items
+    global.fetch.resolves({
+      ok: true,
       json: () => Promise.resolve([
-        { title: 'Test', description: 'Desc', price: 100, userId: { name: 'User' } }
-      ]),
-      ok: true
+        { 
+          _id: '123', 
+          title: 'Test Item', 
+          description: 'This is a test item', 
+          price: 99.99,
+          userId: { name: 'Test User' }
+        }
+      ])
     });
-
-    // Import the actual list.js module
-    const listModule = await import('../../public/list.js');
     
-    // Call the loadItems function if it's exported
-    if (typeof listModule.loadItems === 'function') {
-      await listModule.loadItems();
-    } else {
-      // If not exported, it should have been called automatically on import
-      // Give time for async operations to complete
-      await new Promise(resolve => setTimeout(resolve, 0));
-    }
+    // Load the script
+    const listJsContent = fs.readFileSync(path.resolve(process.cwd(), 'public/list.js'), 'utf8');
+    const scriptElement = jsdom.window.document.createElement('script');
+    scriptElement.textContent = listJsContent;
+    jsdom.window.document.head.appendChild(scriptElement);
     
-    // Check if items were rendered
-    const html = document.getElementById('itemsList').innerHTML;
-    expect(html).to.include('Test');
-    expect(html).to.include('Desc');
-    expect(html).to.include('100');
-    expect(html).to.include('User');
+    // Wait for promises and DOM updates
+    await new Promise(resolve => setTimeout(resolve, 50));
     
-    // Verify fetch was called
-    expect(global.fetch.called).to.be.true;
+    // Check the content of the items list
+    const itemsListHtml = document.getElementById('itemsList').innerHTML;
+    expect(itemsListHtml).to.include('Test Item');
+    expect(itemsListHtml).to.include('This is a test item');
+    expect(itemsListHtml).to.include('99.99');
+    expect(itemsListHtml).to.include('Test User');
+    
+    // Verify fetch was called with the correct URL
+    expect(global.fetch.calledOnce).to.be.true;
+    expect(global.fetch.firstCall.args[0]).to.include('/items');
   });
 });

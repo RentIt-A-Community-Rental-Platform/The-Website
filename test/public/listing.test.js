@@ -1,5 +1,3 @@
-// test/public/listing.test.js
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
@@ -69,6 +67,11 @@ describe('listing.js behavior', () => {
       ok: true,
       json: () => Promise.resolve({ secure_url: 'https://cdn.test/mock.png' })
     });
+
+    // Stubbing methods from `listing.js`
+    global.goToStep = sandbox.stub();
+    global.analyzeImageWithGemini = sandbox.stub();
+    global.uploadToCloudinary = sandbox.stub().resolves('https://cdn.test/mock.png');
   });
 
   afterEach(() => {

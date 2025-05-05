@@ -6,36 +6,6 @@ import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
-console.log('> Auth routes initialized');
-
-// Hardcoded test credentials - PLAIN TEXT for testing
-// const TEST_USER = {
-//     email: 'test@test.com',
-//     password: 'test123',
-//     name: 'Test User',
-//     // isTestUser: true  // Mark as test user to skip password hashing
-// };
-
-// // Create test user on server start
-// async function createTestUser() {
-//     try {
-//         // Check if test user exists
-//         let testUser = await User.findOne({ email: TEST_USER.email });
-
-//         if (!testUser) {
-//             // Create new test user with plain text password
-//             testUser = new User(TEST_USER);
-//             await testUser.save();
-//             console.log('✅ Test user created successfully');
-//         }
-//     } catch (error) {
-//         console.error('Failed to create test user:', error);
-//     }
-// }
-
-// // Initialize test user
-// createTestUser();
-
 // Register
 router.post('/register', async (req, res) => {
     try {

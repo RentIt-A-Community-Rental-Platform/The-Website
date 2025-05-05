@@ -347,6 +347,10 @@
             setupUserDropdown();
             // Remove the old rentButton event handler and instead call setupRentNowButton
             document.getElementById('rentNowBtn').addEventListener('click', async () => {
+                const token =sessionStorage.getItem('user');
+                if (!token) {
+                    window.location.href = '/auth.html';
+                }
                 setupRentNowButton();
 
                 // Pass rental period to the modal flow

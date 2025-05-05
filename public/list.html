@@ -32,7 +32,6 @@
     </script>
     <script>
         const token =sessionStorage.getItem('user');
-        console.log("token", token);
         if (!token) {
             // Save current page for redirect after login
             window.location.href = '/auth.html';

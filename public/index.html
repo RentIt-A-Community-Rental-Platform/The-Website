@@ -176,8 +176,10 @@
             <!-- Items will be dynamically inserted here -->
         </div>
     </div>
-
-    <script>
+    <script type="module">
+        import ItemService from './services/ItemService.js';
+        // Make ItemService available globally
+        window.ItemService = ItemService;
         const API_URL = 'http://localhost:3000';
 
         // Toggle notification dropdown
@@ -277,8 +279,7 @@
         // Fetch and display items
         async function loadItems() {
             try {
-                const response = await fetch(`${API_URL}/items`);
-                const items = await response.json();
+                const items = await ItemService.getItems();
                 allItems = items;
                 displayItems(items);
             } catch (error) {

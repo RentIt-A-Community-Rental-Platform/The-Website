@@ -134,8 +134,15 @@
                 <button id="rentNowBtn" class="w-full py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold">
                     Rent Now
                 </button>
+                <script type="module">
+                    
+                </script>
+
                 <script src="/item.js"></script>
-                <script>
+                <script type="module">
+                    import ItemService from './services/ItemService.js';
+                    // Make ItemService available globally
+                    window.ItemService = ItemService;
                     const API_URL = 'http://localhost:3000';
                     let item = null;
 
@@ -179,8 +186,7 @@
                     // Load and display item details
                     async function loadItem() {
                         try {
-                            const response = await fetch(`${API_URL}/items/${itemId}`);
-                            item = await response.json();
+                            item = await ItemService.getItemById(itemId);
 
                             // Update item details
                             document.getElementById('itemTitle').textContent = item.title;

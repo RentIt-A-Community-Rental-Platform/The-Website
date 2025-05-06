@@ -1,22 +1,12 @@
+import ListingAnalyzer from '/services/ListingAnalyzer.js';
+import MediaService from '/services/MediaService.js';
 // Constants
 const API_URL = 'http://localhost:3000';
-
-// Bypass authentication - set dummy user data
-// const DUMMY_USER = {
-//     id: '123',
-//     email: 'test@test.com',
-//     name: 'Test User'
-// };
-// const DUMMY_TOKEN = 'dummy-token-123';
-
-// // Store dummy auth data
-// sessionStorage.setItem('token', DUMMY_TOKEN);
-// sessionStorage.setItem('user', JSON.stringify(DUMMY_USER));
+const analyzer = new ListingAnalyzer();
+const mediaService = new MediaService();
 
 // State management
 let currentStep = 1;
-let selectedCategory = '';
-let uploadedPhotos = [];
 let formData = {
     category: '',
     photos: [],
@@ -85,67 +75,49 @@ function handleDrop(e) {
 async function analyzeImageWithGemini(imageFile) {
     const overlay = document.getElementById('aiLoadingOverlay');
     try {
-      overlay.classList.remove('hidden'); // 👈 show overlay
-  
-      const base64Image = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result.split(',')[1];
-          resolve(base64);
-        };
-        reader.readAsDataURL(imageFile);
-      });
-  
-      const response = await fetch(`${API_URL}/api/gemini/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base64Image })
-      });
-  
-      if (!response.ok) throw new Error('Failed to analyze image');
-  
-      const analysisResult = await response.json();
-  
-      // Fill out the form
-      document.getElementById('title').value = analysisResult.title;
-      document.getElementById('description').value = analysisResult.description;
-      document.getElementById('price').value = analysisResult.suggestedPrice;
-      document.getElementById('deposit').value = Math.round(analysisResult.suggestedPrice * 5);
-  
-      formData.title = analysisResult.title;
-      formData.description = analysisResult.description;
-      formData.price = analysisResult.suggestedPrice;
-      formData.deposit = Math.round(analysisResult.suggestedPrice * 5);
-  
-      // Set category in dropdown
-      const categoryDropdown = document.getElementById('category');
-      const options = Array.from(categoryDropdown.options);
-      let matchFound = false;
-  
-      options.forEach(option => {
-        if (option.value.toLowerCase() === analysisResult.category.toLowerCase()) {
-          option.selected = true;
-          formData.category = option.value;
-          matchFound = true;
+        overlay.classList.remove('hidden');
+        
+        const analysisResult = await analyzer.analyzeImage(imageFile);
+        
+        // Fill out the form
+        document.getElementById('title').value = analysisResult.title;
+        document.getElementById('description').value = analysisResult.description;
+        document.getElementById('price').value = analysisResult.suggestedPrice;
+        document.getElementById('deposit').value = Math.round(analysisResult.suggestedPrice * 5);
+        
+        formData.title = analysisResult.title;
+        formData.description = analysisResult.description;
+        formData.price = analysisResult.suggestedPrice;
+        formData.deposit = Math.round(analysisResult.suggestedPrice * 5);
+        
+        // Set category in dropdown
+        const categoryDropdown = document.getElementById('category');
+        const options = Array.from(categoryDropdown.options);
+        let matchFound = false;
+        
+        options.forEach(option => {
+            if (option.value.toLowerCase() === analysisResult.category.toLowerCase()) {
+                option.selected = true;
+                formData.category = option.value;
+                matchFound = true;
+            }
+        });
+        
+        if (!matchFound) {
+            categoryDropdown.value = 'Other';
+            formData.category = 'Other';
         }
-      });
-  
-      if (!matchFound) {
-        categoryDropdown.value = 'Other';
-        formData.category = 'Other';
-      }
-  
-      // Hide overlay and move to next step
-      overlay.classList.add('hidden');
-      goToStep(2); // 👈 jump to Item Details step (adjust if different)
-  
+        
+        // Hide overlay and move to next step
+        overlay.classList.add('hidden');
+        goToStep(2);
+        
     } catch (error) {
-      overlay.classList.add('hidden');
-      console.error('Error analyzing image:', error);
-      alert('Failed to analyze image.');
+        overlay.classList.add('hidden');
+        console.error('Error analyzing image:', error);
+        alert('Failed to analyze image.');
     }
-  }
-  
+}
 
 async function compressImage(file) {
     const options = {
@@ -157,26 +129,13 @@ async function compressImage(file) {
   }
 
 async function uploadToCloudinary(file) {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    let response = {}
     try {
-        response = await fetch(`${API_URL}/api/upload-image`, {
-        method: 'POST',
-        body: formData
-        });
-    
-        if (!response.ok) {
-            const { error } = await response.json();
-            throw new Error(error || 'Upload failed');
-        }
+        return await mediaService.uploadImage(file);
     } catch (err) {
-      alert(err.message); // or show it in your UI
+        alert(err.message); // or show it in your UI
+        throw err;
     }
-    const data = await response.json();
-    return data.secure_url;
-  }
+}
 
   function handleFiles(e) {
     const input = e.target;
@@ -376,4 +335,4 @@ function updateReview() {
 }
 
 // Initialize
-nextBtn.disabled = true; 
+nextBtn.disabled = true;

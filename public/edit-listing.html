@@ -50,6 +50,12 @@
     </form>
   </div>
 
+  <script type="module">
+    import ItemService from '/services/ItemService.js';
+    // Make ItemService available globally
+    window.ItemService = ItemService;
+  </script>
+
   <script>
     const API_URL = 'http://localhost:3000';
     const params = new URLSearchParams(window.location.search);
@@ -77,21 +83,11 @@
         deposit: parseFloat(document.getElementById('deposit').value)
       };
 
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-
-      const res = await fetch(`${API_URL}/items/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedItem)
-      });
-
-      if (res.ok) {
+      try {
+        await ItemService.updateItem(itemId, updatedItem);
         alert('Listing updated successfully.');
         window.location.href = '/my-listings.html';
-      } else {
+      } catch (error) {
         alert('Failed to update listing.');
       }
     });

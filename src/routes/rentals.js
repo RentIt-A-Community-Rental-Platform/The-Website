@@ -122,7 +122,7 @@ router.get('/my-requests', isAuthenticated, async (req, res) => {
 router.post('/:id/accept', isAuthenticated, async (req, res) => {
     try {
         const rental = await Rental.findOneAndUpdate(
-            { _id: req.params.id, ownerId: req.user._id, status: 'pending' },
+            { _id: req.params.id},
             { status: 'accepted' },
             { new: true }
         );
@@ -140,7 +140,7 @@ router.post('/:id/accept', isAuthenticated, async (req, res) => {
 router.post('/:id/reject', isAuthenticated, async (req, res) => {
     try {
         const rental = await Rental.findOneAndUpdate(
-            { _id: req.params.id, ownerId: req.user._id, status: 'pending' },
+            { _id: req.params.id},
             { status: 'rejected' },
             { new: true }
         );

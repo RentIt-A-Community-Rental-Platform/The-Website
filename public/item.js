@@ -168,7 +168,13 @@ async function submitRentalRequest(e) {
 
     let userId;
 
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token =sessionStorage.getItem('user');
+    if (!token) {
+        // Save current page for redirect after login
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        window.location.href = '/auth.html';
+        return;
+    }
         
     await fetch(`${API_URL}/auth/me`)
         .then(response => response.json())

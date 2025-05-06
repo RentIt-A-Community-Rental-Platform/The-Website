@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">59.28% </span>
+                <span class="strong">40% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>83/140</span>
+                <span class='fraction'>56/140</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/9</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">59.28% </span>
+                <span class="strong">40% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>83/140</span>
+                <span class='fraction'>56/140</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -250,33 +250,33 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -389,33 +389,33 @@ router.get('/', async (req, res) =&gt; {
 &nbsp;
 // Create new item with authentication
 router.post('/', isAuthenticated, async (req, res) =&gt; {
-    try {
-        console.log('Received item data:', req.body);
-&nbsp;
-        const { title, description, price, category, deposit, photos } = req.body;
-        
-        // Get the authenticated user information
-        const userId = req.user._id;
-        const userName = req.user.name <span class="branch-0 cbranch-no" title="branch not covered" >|| 'Unknown User';</span>
-&nbsp;
-        // Parse the photos if needed (in case it's sent as a stringified array)
-        const parsedPhotos = typeof photos === 'string' <span class="branch-0 cbranch-no" title="branch not covered" >? JSON.parse(photos) </span>: photos;
-&nbsp;
-        const item = new Item({
-            title,
-            description,
-            price: parseFloat(price),
-            category,
-            deposit: parseFloat(deposit),
-            userId: userId,
-            userName: userName,  // Add the user's name
-            photos: parsedPhotos <span class="branch-0 cbranch-no" title="branch not covered" >|| []</span>
-        });
-&nbsp;
-        await item.save();
-        console.log('Item created successfully by user:', userName);
-        res.status(201).json(item);
-    } <span class="branch-0 cbranch-no" title="branch not covered" >catch (error) {</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >        console.log('Received item data:', req.body);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >        const { title, description, price, category, deposit, photos } = req.body;</span>
+<span class="cstat-no" title="statement not covered" >        </span>
+<span class="cstat-no" title="statement not covered" >        // Get the authenticated user information</span>
+<span class="cstat-no" title="statement not covered" >        const userId = req.user._id;</span>
+<span class="cstat-no" title="statement not covered" >        const userName = req.user.name || 'Unknown User';</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >        // Parse the photos if needed (in case it's sent as a stringified array)</span>
+<span class="cstat-no" title="statement not covered" >        const parsedPhotos = typeof photos === 'string' ? JSON.parse(photos) : photos;</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >        const item = new Item({</span>
+<span class="cstat-no" title="statement not covered" >            title,</span>
+<span class="cstat-no" title="statement not covered" >            description,</span>
+<span class="cstat-no" title="statement not covered" >            price: parseFloat(price),</span>
+<span class="cstat-no" title="statement not covered" >            category,</span>
+<span class="cstat-no" title="statement not covered" >            deposit: parseFloat(deposit),</span>
+<span class="cstat-no" title="statement not covered" >            userId: userId,</span>
+<span class="cstat-no" title="statement not covered" >            userName: userName,  // Add the user's name</span>
+<span class="cstat-no" title="statement not covered" >            photos: parsedPhotos || []</span>
+<span class="cstat-no" title="statement not covered" >        });</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >        await item.save();</span>
+<span class="cstat-no" title="statement not covered" >        console.log('Item created successfully by user:', userName);</span>
+<span class="cstat-no" title="statement not covered" >        res.status(201).json(item);</span>
+<span class="cstat-no" title="statement not covered" >    } catch (error) {</span>
 <span class="cstat-no" title="statement not covered" >        console.error('Error creating item:', error);</span>
 <span class="cstat-no" title="statement not covered" >        res.status(400).json({ error: 'Failed to create item' });</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
@@ -487,7 +487,7 @@ export const itemRoutes = router; </pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-04T18:11:22.502Z
+                at 2025-05-05T19:16:33.171Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

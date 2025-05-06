@@ -1,25 +1,55 @@
-// test/setup.js
+// Global test setup
 import mongoose from 'mongoose';
-import { User } from '../src/models/User.js';
-import { Item } from '../src/models/Item.js';
+import dotenv from 'dotenv';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
-export const mochaHooks = {
-  beforeAll: async function() {
-    this.timeout(10000);
-    await mongoose.connect(process.env.MONGODB_TEST_URI, {
-      useNewUrlParser:    true,
+// Load environment variables
+dotenv.config({ path: '.env.test' });
+
+// Use in-memory MongoDB for testing to avoid dependency on external database
+let mongoServer;
+
+// Setup MongoDB connection for testing
+before(async function() {
+  this.timeout(30000); // Allow 30 seconds for in-memory MongoDB setup
+  
+  // Create in-memory MongoDB server
+  mongoServer = await MongoMemoryServer.create();
+  const mongoURI = mongoServer.getUri();
+  
+  try {
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-  },
-
-  afterAll: async function() {
-    this.timeout(5000);
-    await mongoose.disconnect();
-  },
-
-  beforeEach: async function() {
-    // wipe all collections between tests
-    await User.deleteMany({});
-    await Item.deleteMany({});
+    console.log('> Connected to in-memory test database');
+  } catch (err) {
+    console.error('> Test database connection error:', err);
+    process.exit(1);
   }
-};
+});
+
+// Clean up database after all tests
+after(async function() {
+  this.timeout(5000);
+  if (mongoose.connection.readyState === 1) {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
+    console.log('> Test database dropped and connection closed');
+  }
+});
+
+// Clear collections between tests to ensure test isolation
+afterEach(async function() {
+  this.timeout(5000);
+  if (mongoose.connection.readyState === 1) {
+    const collections = await mongoose.connection.db.collections();
+    
+    for (const collection of collections) {
+      await collection.deleteMany({});
+    }
+  }
+});

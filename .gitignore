@@ -3,3 +3,5 @@ node_modules/
 .DS_Storecoverage/
 .DS_Store
 **/.DS_Store
+
+**/.claude/settings.local.json

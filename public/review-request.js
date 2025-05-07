@@ -344,26 +344,126 @@ function getStatusTextClass(status) {
 function showModifyForm(reqStr) {
     const req = JSON.parse(decodeURIComponent(reqStr));
     const container = document.getElementById('modifyFormContainer');
+    
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
     container.innerHTML = `
-        <form id="modifyForm" class="mt-4 space-y-2 bg-gray-50 p-4 rounded-lg">
-            <label class="block">Rental Interval:
-                <input type="date" name="startDate" value="${req.rentalPeriod.startDate}" class="border rounded px-2 py-1 mr-2">
-                to
-                <input type="date" name="endDate" value="${req.rentalPeriod.endDate}" class="border rounded px-2 py-1">
-            </label>
-            <label class="block">Meeting Place:
-                <input type="text" name="meetingLocation" value="${req.meetingDetails.location}" class="border rounded px-2 py-1 w-full">
-            </label>
-            <label class="block">Meeting Date:
-                <input type="date" name="meetingDate" value="${req.meetingDetails.date}" class="border rounded px-2 py-1 mr-2">
-                <input type="time" name="meetingTime" value="${req.meetingDetails.time}" class="border rounded px-2 py-1">
-            </label>
-            <label class="block">Notes:
-                <textarea name="notes" class="border rounded px-2 py-1 w-full">${req.meetingDetails.notes || ''}</textarea>
-            </label>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Modification</button>
+        <form id="modifyForm" class="mt-6 bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Modify Request</h3>
+            
+            <div class="space-y-4">
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-1">Rental Period</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="date" 
+                            id="startDate"
+                            name="startDate" 
+                            value="${new Date(req.rentalPeriod.startDate).toISOString().split('T')[0]}"
+                            min="${today}" 
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        <span class="text-gray-500">to</span>
+                        <input type="date" 
+                            id="endDate"
+                            name="endDate" 
+                            value="${new Date(req.rentalPeriod.endDate).toISOString().split('T')[0]}"
+                            min="${new Date(req.rentalPeriod.startDate).toISOString().split('T')[0]}" 
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-1">Price Calculation</label>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <div class="flex justify-between mb-2">
+                            <span>Number of Days:</span>
+                            <span id="numberOfDays">0</span>
+                        </div>
+                        <div class="flex justify-between font-semibold">
+                            <span>Total Price (including deposit):</span>
+                            <span>$<span id="totalPrice">0.00</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-1">Meeting Location</label>
+                    <input type="text" 
+                        name="meetingLocation" 
+                        value="${req.meetingDetails.location}"
+                        placeholder="${req.meetingDetails.location}" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-1">Meeting Time</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="date" 
+                            id="meetingDate"
+                            name="meetingDate" 
+                            value="${new Date(req.rentalPeriod.startDate).toISOString().split('T')[0]}"
+                            readonly
+                            class="flex-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed">
+                        <input type="time" 
+                            name="meetingTime" 
+                            value="${req.meetingDetails.time}"
+                            placeholder="${req.meetingDetails.time}" 
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                    <textarea 
+                        name="notes" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[80px]"
+                        placeholder="Add any additional notes here...">${req.meetingDetails.notes || ''}</textarea>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-2">
+                <button type="button" 
+                    class="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                    onclick="document.getElementById('modifyFormContainer').innerHTML = ''">
+                    Cancel
+                </button>
+                <button type="submit" 
+                    id="submitBtn"
+                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                    Submit Changes
+                </button>
+            </div>
         </form>
     `;
+
+    // Add event listener to update endDate min when startDate changes
+    document.querySelector('input[name="startDate"]').addEventListener('change', function(e) {
+        document.querySelector('input[name="endDate"]').min = e.target.value;
+        updatePriceCalculation(req.itemId);
+    });
+
+    document.querySelector('input[name="endDate"]').addEventListener('change', function() {
+        updatePriceCalculation(req.itemId);
+    });
+
+    // Initial price calculation
+    updatePriceCalculation(req.itemId);
+
+    // Add price calculation function
+    function updatePriceCalculation(item) {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            document.getElementById('numberOfDays').textContent = days;
+            document.getElementById('totalPrice').textContent = (days * item.price + item.deposit).toFixed(2);
+        }
+    }
+
     document.getElementById('modifyForm').onsubmit = function(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -379,6 +479,7 @@ function showModifyForm(reqStr) {
                 notes: formData.get('notes')
             }
         };
+        console.log('UPDATE:',updated);
         modifyRequest(req._id, updated);
     };
 }

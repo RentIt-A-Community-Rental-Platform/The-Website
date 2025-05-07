@@ -81,7 +81,7 @@ router.post('/', isAuthenticated, async (req, res) => {
 function calculateTotalPrice(dailyRate, startDate, endDate, deposit) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((end - start + 1) / (1000 * 60 * 60 * 24));
     return (days * dailyRate) + deposit;
 }
 
@@ -195,9 +195,16 @@ router.put('/:id', isAuthenticated, async (req, res) => {
         rental.chatHistory = rental.chatHistory || [];
         rental.chatHistory.push(chatMsg);
 
-        // Optionally update the main fields for convenience
+        // Update the main fields and recalculate total price
         if (req.body.rentalPeriod) {
             rental.rentalPeriod = req.body.rentalPeriod;
+            // Recalculate total price based on new dates
+            rental.totalPrice = calculateTotalPrice(
+                rental.itemId.price,
+                req.body.rentalPeriod.startDate,
+                req.body.rentalPeriod.endDate,
+                rental.itemId.deposit
+            );
         }
         if (req.body.meetingDetails) {
             rental.meetingDetails = req.body.meetingDetails;

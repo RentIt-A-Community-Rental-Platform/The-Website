@@ -697,7 +697,6 @@ async function confirmPickup(rentalId) {
 
 // Add this helper function to generate a consistent pickup code based on rental ID
 function generatePickupCode(rentalId) {
-    // Use the last 6 characters of the rental ID as the code
-    // In a real application, this should be generated and stored securely
-    return rentalId.slice(-6).padStart(6, '0');
+    // Generate a 6-digit random number
+    return Math.floor(100000 + Math.random() * 900000).toString();
 }

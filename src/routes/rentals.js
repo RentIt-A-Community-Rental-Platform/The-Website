@@ -125,7 +125,8 @@ router.post('/:id/accept', isAuthenticated, async (req, res) => {
             { _id: req.params.id},
             { status: 'accepted' },
             { new: true }
-        );
+        ).populate('itemId')
+        .populate('renterId');;
         if (!rental) {
             return res.status(404).json({ error: 'Rental request not found or already processed' });
         }
@@ -143,7 +144,8 @@ router.post('/:id/reject', isAuthenticated, async (req, res) => {
             { _id: req.params.id},
             { status: 'rejected' },
             { new: true }
-        );
+        ).populate('itemId')
+        .populate('renterId');;
         if (!rental) {
             return res.status(404).json({ error: 'Rental request not found or already processed' });
         }

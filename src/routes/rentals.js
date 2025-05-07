@@ -90,6 +90,24 @@ router.get('/pending', isAuthenticated, async (req, res) => {
     try {
         const allRequests = await Rental.find({ 
             ownerId: req.user._id, 
+            status: { $in: ['pending', 'modified'] }
+        })
+        .populate('itemId')
+        .populate('renterId');
+    
+        res.json(allRequests);
+    } catch (error) {
+        console.error('Error fetching pending rental requests:', error);
+        res.status(500).json({ error: 'Failed to fetch pending rental requests' });
+    }
+});
+
+
+// Get all pending rental requests for the current user (as owner)
+router.get('/', isAuthenticated, async (req, res) => {
+    try {
+        const allRequests = await Rental.find({ 
+            ownerId: req.user._id, 
             status: { $in: ['pending', 'modified', 'accepted', 'rejected', 'completed','ongoing'] }
         })
         .populate('itemId')

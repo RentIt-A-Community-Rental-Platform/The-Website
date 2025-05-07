@@ -7,7 +7,7 @@ let selectedRequestId = null;
 // Fetch all pending requests for the owner (where user is receiver)
 async function fetchRequests() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const res = await fetch(`${API_URL}/rentals/pending`, {
+    const res = await fetch(`${API_URL}/rentals`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     return res.json();
@@ -615,80 +615,80 @@ function refreshUI() {
     renderSenderRequestsList(myRequests);
 }
 
-// Poll for notifications
-function pollNotifications() {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    // if (!token) return;
+// // Poll for notifications
+// function pollNotifications() {
+//     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+//     // if (!token) return;
 
-    // Fetch requests where user is owner (receiver)
-    fetch(`${API_URL}/rentals/pending`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(ownerRequests => {
-        // // requests = ownerRequests;
-        // if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
-        //     console.log('new msg owner');
-        //     requests = ownerRequests;
-        // }
-        renderRequestsList(ownerRequests);
+//     // Fetch requests where user is owner (receiver)
+//     fetch(`${API_URL}/rentals/pending`, {
+//         headers: { 'Authorization': `Bearer ${token}` }
+//     })
+//     .then(res => res.json())
+//     .then(ownerRequests => {
+//         // // requests = ownerRequests;
+//         // if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
+//         //     console.log('new msg owner');
+//         //     requests = ownerRequests;
+//         // }
+//         renderRequestsList(ownerRequests);
 
-        if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
-            requests.forEach((item,index)=>{
-                if(JSON.stringify(requests[index])!==JSON.stringify(ownerRequests[index])){
-                    showRequestDetails(ownerRequests[index], 'receiver');
-                }
-            })
+//         if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
+//             requests.forEach((item,index)=>{
+//                 if(JSON.stringify(requests[index])!==JSON.stringify(ownerRequests[index])){
+//                     showRequestDetails(ownerRequests[index], 'receiver');
+//                 }
+//             })
             
-            requests = ownerRequests;
-        }
-    });
+//             requests = ownerRequests;
+//         }
+//     });
 
-    // Fetch requests where user is renter (sender)
-    fetch(`${API_URL}/rentals/my-requests`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(senderRequests => {
+//     // Fetch requests where user is renter (sender)
+//     fetch(`${API_URL}/rentals/my-requests`, {
+//         headers: { 'Authorization': `Bearer ${token}` }
+//     })
+//     .then(res => res.json())
+//     .then(senderRequests => {
         
-        renderSenderRequestsList(senderRequests);
+//         renderSenderRequestsList(senderRequests);
 
-        if (JSON.stringify(myRequests) !== JSON.stringify(senderRequests)){
-            myRequests.forEach((item,index)=>{
-                if(JSON.stringify(myRequests[index])!==JSON.stringify(senderRequests[index])){
-                    showRequestDetails(senderRequests[index], 'sender');
-                }
-            })
+//         if (JSON.stringify(myRequests) !== JSON.stringify(senderRequests)){
+//             myRequests.forEach((item,index)=>{
+//                 if(JSON.stringify(myRequests[index])!==JSON.stringify(senderRequests[index])){
+//                     showRequestDetails(senderRequests[index], 'sender');
+//                 }
+//             })
             
-            myRequests = senderRequests;
-        }
+//             myRequests = senderRequests;
+//         }
 
-    });
+//     });
 
-}
+// }
 
 // Initialize the page
-window.onload = async function() {
-    // Fetch both types of requests
-    requests = await fetchRequests();
-    myRequests = await fetchMyRequests();
-    console.log(requests, myRequests);
-    // Render both lists
-    renderRequestsList(requests);
-    renderSenderRequestsList(myRequests);
+// window.onload = async function() {
+//     // Fetch both types of requests
+//     requests = await fetchRequests();
+//     myRequests = await fetchMyRequests();
+//     console.log(requests, myRequests);
+//     // Render both lists
+//     renderRequestsList(requests);
+//     renderSenderRequestsList(myRequests);
     
-    // Show details for the first request if available
-    // if (requests.length > 0) {
-    //     selectedRequestId = requests[0]._id;
-    //     showRequestDetails(requests[0], 'receiver');
-    // } else if (myRequests.length > 0) {
-    //     selectedRequestId = myRequests[0]._id;
-    //     showRequestDetails(myRequests[0], 'sender');
-    // }
+//     // Show details for the first request if available
+//     // if (requests.length > 0) {
+//     //     selectedRequestId = requests[0]._id;
+//     //     showRequestDetails(requests[0], 'receiver');
+//     // } else if (myRequests.length > 0) {
+//     //     selectedRequestId = myRequests[0]._id;
+//     //     showRequestDetails(myRequests[0], 'sender');
+//     // }
     
-    // Set up polling for updates
-    setInterval(pollNotifications, 5000);
-};
+//     // Set up polling for updates
+//     setInterval(pollNotifications, 5000);
+// };
 
 // Add this function after the existing functions
 async function confirmPickup(rentalId) {
@@ -832,7 +832,7 @@ function pollNotifications() {
     // if (!token) return;
 
     // Fetch requests where user is owner (receiver)
-    fetch(`${API_URL}/rentals/pending`, {
+    fetch(`${API_URL}/rentals`, {
         headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())

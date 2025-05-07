@@ -32,17 +32,23 @@ const upload = multer({
 });
 
 // Get all items
-// GET /items?userId=123
+// GET /items?userId=123 or /items?excludeUserId=123
 router.get('/', async (req, res) => {
     try {
-      const query = req.query.userId ? { userId: req.query.userId } : {};
-      const items = await Item.find(query).sort({ createdAt: -1 });
-      res.json(items);
+        let items
+        if (req.query.userId) {
+            // query.userId = req.query.userId;
+            items = await Item.find({userId:req.query.userId}).sort({ createdAt: -1 });
+        } else if (req.query.excludeUserId) {
+            items = await Item.find({userId:{ $ne: req.query.excludeUserId }}).sort({ createdAt: -1 });
+        }
+        
+        res.json(items);
     } catch (error) {
-      console.error('Error fetching items:', error);
-      res.status(500).json({ error: 'Failed to fetch items' });
+        console.error('Error fetching items:', error);
+        res.status(500).json({ error: 'Failed to fetch items' });
     }
-  });
+});
 
 // Create new item with authentication
 router.post('/', isAuthenticated, async (req, res) => {
@@ -137,4 +143,4 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-export const itemRoutes = router; 
+export const itemRoutes = router;

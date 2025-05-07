@@ -1,8 +1,192 @@
+import ItemService from './services/ItemService.js';
+        import AuthService from '/services/AuthService.js';
+        const authService = new AuthService();
+
+        async function checkAuth() {
+            const data = await authService.checkAuthStatus();
+            authService.updateUIForAuthStatus(data);
+        }
+        // Make ItemService available globally
+        // window.ItemService = ItemService;
+        const API_URL = 'http://localhost:3000';
+        let item = null;
+
+        // Get item ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+
+        // Set min dates for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('rentStartDate').min = today;
+        document.getElementById('rentEndDate').min = today;
+
+        // Handle date selection
+        document.getElementById('rentStartDate').addEventListener('change', (e) => {
+            document.getElementById('rentEndDate').min = e.target.value;
+            if (document.getElementById('rentEndDate').value && document.getElementById('rentEndDate').value < e.target.value) {
+                document.getElementById('rentEndDate').value = e.target.value;
+            }
+            updatePriceCalculation();
+        });
+
+        document.getElementById('rentEndDate').addEventListener('change', () => {
+            updatePriceCalculation();
+        });
+
+        // Update price calculation
+        function updatePriceCalculation() {
+            const startDate = document.getElementById('rentStartDate').value;
+            const endDate = document.getElementById('rentEndDate').value;
+
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                
+                document.getElementById('numberOfDays').textContent = days;
+                document.getElementById('totalPrice').textContent = (days * item.price + item.deposit).toFixed(2);
+            }
+        }
+
+        // Load and display item details
+        async function loadItem() {
+            try {
+                item = await ItemService.getItemById(itemId);
+
+                // Update item details
+                document.getElementById('itemTitle').textContent = item.title;
+                document.getElementById('itemCategory').textContent = item.category;
+                document.getElementById('itemPrice').textContent = item.price;
+                document.getElementById('itemDeposit').textContent = item.deposit;
+                document.getElementById('itemDescription').textContent = item.description;
+                document.getElementById('dailyRate').textContent = item.price;
+                document.getElementById('securityDeposit').textContent = item.deposit;
+
+                // Update images
+                if (item.photos && item.photos.length > 0) {
+                    document.getElementById('mainImage').innerHTML = `
+                        <img src="${item.photos[0]}" alt="${item.title}" class="w-full h-full object-cover">
+                    `;
+
+                    document.getElementById('thumbnails').innerHTML = item.photos.map((photo, index) => `
+                        <button onclick="updateMainImage(${index})" class="w-full h-24 bg-gray-100 rounded-lg overflow-hidden">
+                            <img src="${photo}" alt="${item.title}" class="w-full h-full object-cover">
+                        </button>
+                    `).join('');
+                } else {
+                    document.getElementById('mainImage').innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-6xl"></i>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading item:', error);
+            }
+        }
+
+        // Update main image when clicking thumbnails
+        function updateMainImage(index) {
+            document.getElementById('mainImage').innerHTML = `
+                <img src="${item.photos[index]}" alt="${item.title}" class="w-full h-full object-cover">
+            `;
+        }
+
+        // Setup user dropdown functionality
+        function setupUserDropdown() {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            userMenuButton?.addEventListener('click', function() {
+                userDropdown.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking elsewhere
+            document.addEventListener('click', function(event) {
+                if (userMenuButton && !userMenuButton.contains(event.target) && 
+                    userDropdown && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+            
+            // Setup logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            logoutBtn?.addEventListener('click', function() {
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                window.location.reload();
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            checkAuth();
+            loadItem();
+            setupUserDropdown();
+            // Remove the old rentButton event handler and instead call setupRentNowButton
+            document.getElementById('rentNowBtn').addEventListener('click', async () => {
+                const startDate = document.getElementById('rentStartDate').value;
+                const endDate = document.getElementById('rentEndDate').value;
+                
+                // Check if dates are selected
+                if (!startDate || !endDate) {
+                    alert('Please select both start and end dates');
+                    return;
+                }
+                
+                // Check if dates are in correct order
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                if (end < start) {
+                    alert('End date cannot be before start date');
+                    return;
+                }
+                
+                // Pass rental period to the modal flow
+                window.getRentalPeriod = function() {
+                    return {
+                        startDate: startDate,
+                        endDate: endDate
+                    };
+                };
+
+                showPaymentOptions();
+            });
+        });
+
+
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                // Call the server logout endpoint
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+                    }
+                });
+            } catch (error) {
+                console.error('Logout request failed:', error);
+            } finally {
+                // Clean up local storage and session storage
+                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
+                
+                // Redirect to home page
+                window.location.href = '/index.html';
+            }
+        });
+        
 // Payment and meeting setup functionality
 function setupRentNowButton() {
     const rentNowBtn = document.getElementById('rentNowBtn');
     if (rentNowBtn) {
-        rentNowBtn.addEventListener('click', showPaymentOptions);
+        // Clear any existing listeners
+        rentNowBtn.removeEventListener('click', showPaymentOptions);
     }
 }
 
@@ -99,13 +283,17 @@ function showMeetingSetup() {
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.id = 'meetingModal';
     
+    // Get rental period
+    const rentalPeriod = window.getRentalPeriod();
+    const startDate = rentalPeriod.startDate;
+    
     modal.innerHTML = `
         <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 class="text-2xl font-bold mb-4">Meeting Details</h2>
             <form id="meetingForm" class="space-y-4">
-                <div>
+                <div class="select-none">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                    <input type="date" id="meetingDate" class="w-full p-2 border rounded-lg" required min="${new Date().toISOString().split('T')[0]}">
+                    <input type="date" id="meetingDate" class="w-full p-2 border rounded-lg bg-gray-100" value="${startDate}" readonly>
                 </div>
                 
                 <div>

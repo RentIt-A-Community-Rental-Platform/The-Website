@@ -1,5 +1,16 @@
 import ListingAnalyzer from '/services/ListingAnalyzer.js';
 import MediaService from '/services/MediaService.js';
+import AuthService from '/services/AuthService.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const authService = new AuthService();
+  if (!(await authService.requireAuth())) {
+      return; // Stop execution if not authenticated
+  }
+  
+  // Rest of your page initialization code
+});
+
 // Constants
 const API_URL = 'http://localhost:3000';
 const analyzer = new ListingAnalyzer();
@@ -153,7 +164,7 @@ async function uploadToCloudinary(file) {
         }
     }
     
-    uploadedPhotos = files;
+    // uploadedPhotos = files;
     formData.photos = files;
   
     previewContainer.innerHTML = '';

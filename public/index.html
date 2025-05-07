@@ -79,7 +79,7 @@
                             <div class="px-4 py-2 text-center text-sm text-gray-500" id="noNotifications">No new requests.</div>
                         </div>
                     </div>
-                    <a href="/list.html" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
+                    <a href="#" onclick="handleRentStuffClick(event)" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">Rent your stuff</a>
                     
                     <!-- User icon for logged in users (hidden by default) -->
                     <div id="userIconContainer" class="relative">
@@ -178,6 +178,8 @@
     </div>
     <script type="module">
         import ItemService from './services/ItemService.js';
+        import AuthService from './services/AuthService.js';
+        const authService = new AuthService();
         // Make ItemService available globally
         window.ItemService = ItemService;
         const API_URL = 'http://localhost:3000';
@@ -186,15 +188,38 @@
         document.getElementById('notificationBtn').addEventListener('click', () => {
             document.getElementById('notificationDropdown').classList.toggle('hidden');
         });
-        // Fetch and render rental requests (replace with your API logic)
-        async function loadNotifications() {
-            // Example: Fetch rental requests for the logged-in user
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-
-            console.log('notification loading');
-            // if (!token) return;
-
         
+        // Add logout button event listener
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await authService.logout();
+        });
+
+        // Fetch and render rental requests (replace with your API logic)
+        document.addEventListener('DOMContentLoaded', async () => {
+            const authData = await authService.checkAuthStatus();
+            const chatBtn = document.getElementById('chatBtn');
+            const notificationBtn = document.getElementById('notificationBtn');
+            
+            if (!authData.isAuthenticated) {
+                chatBtn.classList.add('hidden');
+                notificationBtn.classList.add('hidden');
+            } else {
+                chatBtn.classList.remove('hidden');
+                notificationBtn.classList.remove('hidden');
+            }
+        });
+
+        // Modify the loadNotifications function
+        async function loadNotifications() {
+            const authData = await authService.checkAuthStatus();
+            if (!authData.isAuthenticated) {
+                document.getElementById('notificationBtn').classList.add('hidden');
+                return;
+            }
+
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            console.log('notification loading');
+
             const res = await fetch(`${API_URL}/rentals/pending`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -261,7 +286,6 @@
         let currentCategory = 'all';
         let allItems = [];
 
-        
 
         // Set min dates for date inputs
         const today = new Date().toISOString().split('T')[0];
@@ -275,11 +299,17 @@
                 document.getElementById('endDate').value = e.target.value;
             }
         });
-
+        let excludeUserId=null;
+        const dataAuth = authService.checkAuthStatus();
+        if (dataAuth.isAuthenticated) {
+            excludeUserId = dataAuth.user._id;
+        }
+        console.log("excludeUserId: " + excludeUserId);
+        
         // Fetch and display items
         async function loadItems() {
             try {
-                const items = await ItemService.getItems();
+                const items = await ItemService.getItems(null,excludeUserId);
                 allItems = items;
                 displayItems(items);
             } catch (error) {
@@ -292,10 +322,11 @@
 
             let currentUserId;
             try {
-                const response = await fetch(`${API_URL}/auth/me`);
-                if (response.ok) {
-                    const data = await response.json();
+                const data = await authService.checkAuthStatus();
+                if (data.isAuthenticated) {
                     currentUserId = data.user._id;
+                } else {
+                    currentUserId = null;
                 }
             } catch (error) {
                 console.warn('User not logged in or auth failed. Showing public listings.');
@@ -340,8 +371,8 @@
                                     </p>`}
 
                             </div>
-                            <button onclick="window.location.href='/item.html?id=${item._id}'" 
-                                    class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
+                            <button onclick="handleRentNowClick(event, '${item._id}')" 
+                                class="rentNowBtn px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600">
                                 Rent Now
                             </button>
                         </div>
@@ -469,14 +500,14 @@
                 }
             });
             
-            // Setup logout button
-            const logoutBtn = document.getElementById('logoutBtn');
-            logoutBtn?.addEventListener('click', function() {
-                localStorage.removeItem('token');
-                sessionStorage.removeItem('token');
-                sessionStorage.removeItem('user');
-                window.location.reload();
-            });
+            // // Setup logout button
+            // const logoutBtn = document.getElementById('logoutBtn');
+            // logoutBtn?.addEventListener('click', function() {
+            //     localStorage.removeItem('token');
+            //     sessionStorage.removeItem('token');
+            //     sessionStorage.removeItem('user');
+            //     window.location.reload();
+            // });
         }
 
         // Run when page loads
@@ -495,28 +526,58 @@
             }
         });
 
-        const logoutBtn = document.getElementById('logoutBtn');
-        logoutBtn.addEventListener('click', async function() {
-            try {
-                // Call the server logout endpoint
-                await fetch(`${API_URL}/auth/logout`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
-                    }
-                });
-            } catch (error) {
-                console.error('Logout request failed:', error);
-            } finally {
-                // Clean up local storage and session storage
-                localStorage.removeItem('token');
-                sessionStorage.removeItem('token');
-                sessionStorage.removeItem('user');
+        // const logoutBtn = document.getElementById('logoutBtn');
+        // logoutBtn.addEventListener('click', async function() {
+        //     try {
+        //         // Call the server logout endpoint
+        //         await fetch(`${API_URL}/auth/logout`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+        //             }
+        //         });
+        //     } catch (error) {
+        //         console.error('Logout request failed:', error);
+        //     } finally {
+        //         // Clean up local storage and session storage
+        //         localStorage.removeItem('token');
+        //         sessionStorage.removeItem('token');
+        //         sessionStorage.removeItem('user');
                 
-                // Redirect to home page
-                window.location.href = '/';
+        //         // Redirect to home page
+        //         window.location.href = '/';
+        //     }
+        // });
+
+
+        async function handleRentStuffClick(event) {
+            event.preventDefault();
+            const authData = await authService.checkAuthStatus();
+            if (!authData.isAuthenticated) {
+                window.location.href = '/auth.html';
+            } else {
+                window.location.href = '/list.html';
             }
-        });
+        }
+    // Add this function to handle the Rent Now button click
+    async function handleRentNowClick(event, itemId) {
+        event.preventDefault();
+        const authData = await authService.checkAuthStatus();
+        if (!authData.isAuthenticated) {
+            window.location.href = '/auth.html';
+        } else {
+            window.location.href = `/item.html?id=${itemId}`;
+        }
+    }
+
+    // Make the function available globally
+    window.handleRentNowClick = handleRentNowClick;
+        window.handleRentStuffClick = handleRentStuffClick;
     </script>
 </body>
 </html>
+
+
+
+
+

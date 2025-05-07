@@ -24,9 +24,15 @@ class ItemService {
         }
     }
 
-    async getItems(userId = null) {
+    async getItems(userId = null, excludeUserId = null) {
         try {
-            const url = userId ? `${this.API_URL}/items?userId=${userId}` : `${this.API_URL}/items`;
+            let url = `${this.API_URL}/items`;
+            if (userId) {
+                url += `?userId=${userId}`;
+            } else if (excludeUserId) {
+                url += `?excludeUserId=${excludeUserId}`;
+            }
+            console.log(excludeUserId)
             const response = await fetch(url);
             
             if (!response.ok) {

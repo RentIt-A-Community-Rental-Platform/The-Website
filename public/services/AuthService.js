@@ -3,68 +3,76 @@ class AuthService {
         this.API_URL = 'http://localhost:3000';
     }
 
-    async login(email, password) {
+    async checkAuthStatus() {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         try {
-            const response = await fetch(`${this.API_URL}/auth/login`, {
-                method: 'POST',
+            const response = await fetch(`${this.API_URL}/auth/status`, {
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
             });
 
             const data = await response.json();
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
+            if (data.isAuthenticated && data.user) {
                 sessionStorage.setItem('user', JSON.stringify(data.user));
-                return data;
             } else {
-                throw new Error(data.error || 'Login failed');
+                sessionStorage.removeItem('user');
             }
+            return data;
         } catch (error) {
-            throw new Error('Login failed. Please try again.');
+            console.error('Auth check error:', error);
+            return { isAuthenticated: false };
         }
     }
 
-    async register(name, email, password) {
-        try {
-            const response = await fetch(`${this.API_URL}/auth/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, email, password })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                sessionStorage.setItem('user', JSON.stringify(data.user));
-                return data;
-            } else {
-                throw new Error(data.error + (data.details ? `\nDetails: ${data.details}` : ''));
-            }
-        } catch (error) {
-            throw new Error('Registration failed. Please check your connection and try again.');
+    updateUIForAuthStatus(data) {
+        const userIconContainer = document.getElementById('userIconContainer');
+        const loginLink = document.getElementById('loginLink');
+        const userDisplayName = document.getElementById('userDisplayName');
+        
+        if (data.isAuthenticated) {
+            userIconContainer.classList.remove('hidden');
+            loginLink.classList.add('hidden');
+            userDisplayName.textContent = data.user.name || data.user.email || 'User';
+        } else {
+            userIconContainer.classList.add('hidden');
+            loginLink.classList.remove('hidden');
         }
+    }
+
+    async requireAuth() {
+        const data = await this.checkAuthStatus();
+        if (!data.isAuthenticated) {
+            window.location.href = '/auth.html';
+            return false;
+        }
+        return true;
     }
 
     async logout() {
         try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            // Call the server logout endpoint
             await fetch(`${this.API_URL}/auth/logout`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
         } catch (error) {
             console.error('Logout request failed:', error);
         } finally {
+            // Clean up storage
             localStorage.removeItem('token');
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
+            
+            // Redirect to home page
+            window.location.href = '/index.html';
         }
     }
 }
 
-export default new AuthService();
+export const authService = new AuthService();
+export default AuthService;

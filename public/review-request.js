@@ -174,6 +174,37 @@ function showRequestDetails(req, role) {
                         </div>
                     </div>
                 ` : ''}
+                ${req.status === 'ongoing' && role === 'receiver' ? `
+                    <div class="mt-4 p-4 bg-purple-100 rounded-lg">
+                        <h3 class="font-medium text-purple-800 mb-2">Your Return Code</h3>
+                        <div class="flex items-center justify-center">
+                            <div class="text-2xl font-mono font-bold tracking-wider bg-white px-6 py-3 rounded-lg shadow-inner border-2 border-purple-200">
+                                ${generateReturnCode(req._id)}
+                            </div>
+                        </div>
+                        <p class="text-sm text-purple-700 text-center mt-2">
+                            Show this code to the owner when returning the item
+                        </p>
+                    </div>
+                ` : ''}
+                
+                ${req.status === 'ongoing' && role === 'sender' ? `
+                    <div class="mt-4 p-4 bg-purple-100 rounded-lg">
+                        <h3 class="font-medium text-purple-800 mb-2">Confirm Item Return</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" 
+                                id="returnCode" 
+                                class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500" 
+                                placeholder="Enter 6-digit return code"
+                                maxlength="6"
+                                pattern="[0-9]*">
+                            <button onclick="confirmReturn('${req._id}')" 
+                                class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                                Confirm Return
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
@@ -521,6 +552,217 @@ async function rejectRequest(id) {
         
         // Refresh the UI
         refreshUI();
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// Modify a rental request via API
+async function modifyRequest(id, updated) {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    try {
+        const res = await fetch(`${API_URL}/rentals/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,   
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updated)
+        });
+        if (!res.ok) throw new Error('Failed to modify request');
+        const data = await res.json();
+        console.log(data);
+        // Update the request in the local arrays
+        updateRequestInList(data.rental);
+        
+        // Refresh the UI
+        refreshUI();
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// Update a request in the local arrays
+function updateRequestInList(updatedRequest) {
+    // Update in the receiver requests list
+    const receiverIndex = requests.findIndex(r => r._id === updatedRequest._id);
+    if (receiverIndex !== -1) {
+        requests[receiverIndex] = updatedRequest;
+    }
+    
+    // Update in the sender requests list
+    const senderIndex = myRequests.findIndex(r => r._id === updatedRequest._id);
+    if (senderIndex !== -1) {
+        myRequests[senderIndex] = updatedRequest;
+    }
+}
+
+// Refresh the UI after changes
+function refreshUI() {
+    // Find the updated request
+    const updatedRequest = [...requests, ...myRequests].find(r => r._id === selectedRequestId);
+    
+    if (updatedRequest) {
+        // Determine the user's role in this request
+        const role = requests.some(r => r._id === selectedRequestId) ? 'receiver' : 'sender';
+        
+        // Show the updated request details
+        showRequestDetails(updatedRequest, role);
+    }
+    
+    // Refresh the lists
+    renderRequestsList(requests);
+    renderSenderRequestsList(myRequests);
+}
+
+// Poll for notifications
+function pollNotifications() {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    // if (!token) return;
+
+    // Fetch requests where user is owner (receiver)
+    fetch(`${API_URL}/rentals/pending`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(ownerRequests => {
+        // // requests = ownerRequests;
+        // if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
+        //     console.log('new msg owner');
+        //     requests = ownerRequests;
+        // }
+        renderRequestsList(ownerRequests);
+
+        if (JSON.stringify(requests) !== JSON.stringify(ownerRequests)){
+            requests.forEach((item,index)=>{
+                if(JSON.stringify(requests[index])!==JSON.stringify(ownerRequests[index])){
+                    showRequestDetails(ownerRequests[index], 'receiver');
+                }
+            })
+            
+            requests = ownerRequests;
+        }
+    });
+
+    // Fetch requests where user is renter (sender)
+    fetch(`${API_URL}/rentals/my-requests`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(senderRequests => {
+        
+        renderSenderRequestsList(senderRequests);
+
+        if (JSON.stringify(myRequests) !== JSON.stringify(senderRequests)){
+            myRequests.forEach((item,index)=>{
+                if(JSON.stringify(myRequests[index])!==JSON.stringify(senderRequests[index])){
+                    showRequestDetails(senderRequests[index], 'sender');
+                }
+            })
+            
+            myRequests = senderRequests;
+        }
+
+    });
+
+}
+
+// Initialize the page
+window.onload = async function() {
+    // Fetch both types of requests
+    requests = await fetchRequests();
+    myRequests = await fetchMyRequests();
+    console.log(requests, myRequests);
+    // Render both lists
+    renderRequestsList(requests);
+    renderSenderRequestsList(myRequests);
+    
+    // Show details for the first request if available
+    // if (requests.length > 0) {
+    //     selectedRequestId = requests[0]._id;
+    //     showRequestDetails(requests[0], 'receiver');
+    // } else if (myRequests.length > 0) {
+    //     selectedRequestId = myRequests[0]._id;
+    //     showRequestDetails(myRequests[0], 'sender');
+    // }
+    
+    // Set up polling for updates
+    setInterval(pollNotifications, 5000);
+};
+
+// Add this function after the existing functions
+async function confirmPickup(rentalId) {
+    const code = document.getElementById('pickupCode').value.trim();
+    
+    if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+        alert('Please enter a valid 6-digit code');
+        return;
+    }
+    
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    try {
+        // For demo purposes, accept any valid 6-digit code
+        const res = await fetch(`${API_URL}/rentals/${rentalId}/confirm-pickup`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pickupCode: code })
+        });
+        
+        if (!res.ok) throw new Error('Failed to confirm pickup');
+        const data = await res.json();
+        
+        // Update the request in the local arrays
+        updateRequestInList(data.rental);
+        
+        // Refresh the UI
+        refreshUI();
+        
+        alert('Pickup confirmed successfully!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// Add this helper function to generate a consistent pickup code based on rental ID
+function generatePickupCode(rentalId) {
+    // Generate a 6-digit random number
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Add this helper function to generate a return code
+function generateReturnCode(id) {
+    // For demo purposes, generate a 6-digit code based on the rental ID
+    // In production, this should be a secure random code stored in the database
+    return String(Math.abs(id.split('').reduce((a, b) => a + b.charCodeAt(0), 0))).padStart(6, '0').slice(-6);
+}
+
+// Add this function to handle return confirmation
+async function confirmReturn(id) {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const returnCode = document.getElementById('returnCode').value;
+
+    try {
+        const res = await fetch(`${API_URL}/rentals/${id}/confirm-return`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ returnCode })
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Failed to confirm return');
+        }
+
+        const data = await res.json();
+        updateRequestInList(data.rental);
+        showRequestDetails(data.rental, 'receiver');
+        renderRequestsList(requests);
     } catch (err) {
         alert('Error: ' + err.message);
     }

@@ -149,43 +149,39 @@ function showRequestDetails(req, role) {
     // Show different buttons based on role and status
     let actionButtons = '';
     
-    if (role === 'receiver' && req.status === 'pending') {
-        // Owner can accept, reject, or modify pending requests
-        actionButtons = `
-            <div class="flex justify-end space-x-4 mt-4">
-                <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Reject</button>
-                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
-            </div>
-        `;
-    } else if (role === 'sender' && req.status === 'modified') {
-        // Renter can accept, reject, or modify a modified request
-        actionButtons = `
-            <div class="flex justify-end space-x-4 mt-4">
-                <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Reject</button>
-                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
-            </div>
-        `;
-
-    } else if (isLastMessageFromUser) {
-        // If the last message is from the current user, they can only modify
-        actionButtons = `
-            <div class="flex justify-end space-x-4 mt-4">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
-            </div>
-        `;
-        
-    } else if (req.status !== 'accepted' && req.status !== 'rejected') {
-        // If not accepted or rejected, and not the last sender, can accept, reject, or modify
-        actionButtons = `
-            <div class="flex justify-end space-x-4 mt-4">
-                <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
-                <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Reject</button>
-                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
-            </div>
-        `;
+    if(req.status !== 'accepted' && req.status !== 'rejected'){
+        if (isLastMessageFromUser && role == 'receiver') {
+            // If the last message is from the current user, they can only modify
+            actionButtons = `
+                <div class="flex justify-end space-x-4 mt-4">
+                    <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Reject</button>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
+                </div>
+            `;
+            
+        } else if (isLastMessageFromUser && role == 'sender') {
+            // If the last message is from the current user, they can only modify
+            actionButtons = `
+                <div class="flex justify-end space-x-4 mt-4">
+                    <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Cancel Request</button>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
+                </div>
+            `;
+            
+        } 
+        else{
+            // If not accepted or rejected, and not the last sender, can accept, reject, or modify
+            actionButtons = `
+                <div class="flex justify-end space-x-4 mt-4">
+                    <button class="bg-green-500 text-white px-4 py-2 rounded" onclick="acceptRequest('${req._id}')">Accept</button>
+                    <button class="bg-red-500 text-white px-4 py-2 rounded" onclick="rejectRequest('${req._id}')">Reject</button>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="showModifyForm('${encodeURIComponent(JSON.stringify(req)).replace(/'/g, "\\'")}')">Modify</button>
+                </div>
+            `;
+        }
+       
     }
+
 
     bubbles.push(`
         ${actionButtons}

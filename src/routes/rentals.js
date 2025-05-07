@@ -90,7 +90,7 @@ router.get('/pending', isAuthenticated, async (req, res) => {
     try {
         const allRequests = await Rental.find({ 
             ownerId: req.user._id, 
-            status: { $in: ['pending', 'modified', 'accepted', 'rejected', 'completed'] }
+            status: { $in: ['pending', 'modified', 'accepted', 'rejected', 'completed','ongoing'] }
         })
         .populate('itemId')
         .populate('renterId');
@@ -215,4 +215,54 @@ router.put('/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Confirm pickup and start rental
+router.post('/:rentalId/confirm-pickup', isAuthenticated, async (req, res) => {
+    try {
+        const { pickupCode } = req.body;
+        const rentalId = req.params.rentalId;
+
+        // Validate pickup code format
+        if (!pickupCode || pickupCode.length !== 6 || !/^\d+$/.test(pickupCode)) {
+            return res.status(400).json({ error: 'Invalid pickup code format. Must be 6 digits.' });
+        }
+
+        // Find the rental and verify it's in 'accepted' status
+        const rental = await Rental.findById(rentalId)
+            .populate('itemId')
+            .populate('renterId');
+
+        if (!rental) {
+            return res.status(404).json({ error: 'Rental not found' });
+        }
+
+        if (rental.status !== 'accepted') {
+            return res.status(400).json({ 
+                error: 'Cannot confirm pickup. Rental must be in accepted status.' 
+            });
+        }
+
+        // Verify the authenticated user is the owner
+        if (rental.ownerId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Unauthorized. Only the owner can confirm pickup.' });
+        }
+
+        // For demo purposes, accept any valid 6-digit code
+        // In production, you would verify against a stored/generated code
+
+        // Update rental status to ongoing
+        rental.status = 'ongoing';
+        await rental.save();
+
+        res.json({ 
+            message: 'Pickup confirmed successfully. Rental is now ongoing.',
+            rental 
+        });
+
+    } catch (error) {
+        console.error('Error confirming pickup:', error);
+        res.status(500).json({ error: 'Failed to confirm pickup' });
+    }
+});
+
+export default router;
 export const rentalRoutes = router;

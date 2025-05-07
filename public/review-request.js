@@ -83,6 +83,7 @@ function getStatusBadgeClass(status) {
         case 'accepted': return 'inline-block px-2 py-1 rounded bg-green-100 text-green-800';
         case 'rejected': return 'inline-block px-2 py-1 rounded bg-red-100 text-red-800';
         case 'modified': return 'inline-block px-2 py-1 rounded bg-blue-100 text-blue-800';
+        case 'ongoing': return 'inline-block px-2 py-1 rounded bg-purple-100 text-blue-800';
         default: return 'inline-block px-2 py-1 rounded bg-gray-100 text-gray-800';
     }
 }
@@ -96,51 +97,173 @@ function showRequestDetails(req, role) {
 
     // Item info card at the top
     const itemInfo = `
-        <div class="bg-gray-50 rounded-lg p-4 mb-4 flex items-center space-x-4 shadow">
-            <img src="${req.itemId.photos && req.itemId.photos.length > 0 ? req.itemId.photos[0] : 'https://via.placeholder.com/100x100'}" alt="${req.itemId.title}" class="w-20 h-20 object-cover rounded">
-            <div>
-                <div class="font-bold text-lg text-primary-700">${req.itemId.title}</div>
-                <div class="text-sm text-gray-600">
-                    ${role === 'receiver' 
-                        ? `Requested by: <span class="font-semibold">${req.renterId.name}</span>` 
-                        : `Owner: <span class="font-semibold">${req.ownerId.name}</span>`}
+        <div class="bg-${getStatusBgClass(req.status)} rounded-lg p-6 mb-4 flex items-center space-x-6 shadow-lg transition-all duration-300">
+            <img src="${req.itemId.photos && req.itemId.photos.length > 0 ? req.itemId.photos[0] : 'https://via.placeholder.com/100x100'}" 
+                 alt="${req.itemId.title}" 
+                 class="w-24 h-24 object-cover rounded-lg shadow-md">
+            <div class="flex-1">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h2 class="font-bold text-xl text-gray-800">${req.itemId.title}</h2>
+                        <p class="text-sm text-gray-600">
+                            ${role === 'receiver' 
+                                ? `Requested by <span class="font-medium">${req.renterId.name}</span>` 
+                                : `Owner: <span class="font-medium">${req.ownerId.name}</span>`}
+                        </p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase()}</span>
                 </div>
-                <div class="text-sm text-gray-600">Status: <span class="font-semibold ${getStatusTextClass(req.status)}">${req.status.toUpperCase()}</span></div>
-                <div class="text-sm text-gray-600">Rental Interval: <span class="font-semibold">${req.rentalPeriod.startDate} to ${req.rentalPeriod.endDate}</span></div>
-                <div class="text-sm text-gray-600">Price: <span class="font-semibold">$${req.totalPrice}</span></div>
-                <div class="text-sm text-gray-600">Meeting Place: <span class="font-semibold">${req.meetingDetails.location}</span></div>
-                <div class="text-sm text-gray-600">Meeting Time: <span class="font-semibold">${req.meetingDetails.date} ${req.meetingDetails.time}</span></div>
-                <div class="text-sm text-gray-600">Notes: <span class="font-semibold">${req.meetingDetails.notes || 'None'}</span></div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <div class="text-sm">
+                            <span class="text-gray-500">Rental Period</span>
+                            <p class="font-medium">${formatDate(req.rentalPeriod.startDate)} - ${formatDate(req.rentalPeriod.endDate)}</p>
+                        </div>
+                        <div class="text-sm">
+                            <span class="text-gray-500">Price</span>
+                            <p class="font-medium text-primary-600">$${req.totalPrice}</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm">
+                            <span class="text-gray-500">Meeting Details</span>
+                            <p class="font-medium">${formatDate(req.meetingDetails.date)} at ${formatTime(req.meetingDetails.time)}</p>
+                            <p class="font-medium flex items-center">
+                                <i class="fas fa-location-dot text-primary-500 mr-1"></i>
+                                ${req.meetingDetails.location}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                ${req.meetingDetails.notes ? `
+                    <div class="mt-3 text-sm">
+                        <span class="text-gray-500">Notes</span>
+                        <p class="font-medium">${req.meetingDetails.notes}</p>
+                    </div>
+                ` : ''}
+                
+                ${req.status === 'accepted' && role === 'sender' ? `
+                    <div class="mt-4 p-4 bg-green-100 rounded-lg">
+                        <h3 class="font-medium text-green-800 mb-2">Your Pickup Code</h3>
+                        <div class="flex items-center justify-center">
+                            <div class="text-2xl font-mono font-bold tracking-wider bg-white px-6 py-3 rounded-lg shadow-inner border-2 border-green-200">
+                                ${generatePickupCode(req._id)}
+                            </div>
+                        </div>
+                        <p class="text-sm text-green-700 text-center mt-2">
+                            Show this code to the owner when picking up the item
+                        </p>
+                    </div>
+                ` : ''}
+                
+                ${req.status === 'accepted' && role === 'receiver' ? `
+                    <div class="mt-4 p-4 bg-green-100 rounded-lg">
+                        <h3 class="font-medium text-green-800 mb-2">Confirm Item Pickup</h3>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" 
+                                id="pickupCode" 
+                                class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500" 
+                                placeholder="Enter 6-digit pickup code"
+                                maxlength="6"
+                                pattern="[0-9]*">
+                            <button onclick="confirmPickup('${req._id}')" 
+                                class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                Confirm Pickup
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
+
+    // Add these helper functions at the appropriate place in your code
+    function getStatusBgClass(status) {
+        switch(status.toLowerCase()) {
+            case 'pending': return 'bg-yellow-50';
+            case 'accepted': return 'bg-green-50';
+            case 'rejected': return 'bg-red-50';
+            case 'modified': return 'bg-blue-50';
+            case 'ongoing': return 'bg-purple-50';
+            default: return 'bg-gray-50';
+        }
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    function formatTime(timeStr) {
+        return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
 
     // Render all chat history messages
     (req.chatHistory || []).forEach(msg => {
         const isOwner = msg.sender === 'owner';
         const isCurrentUserSender = (role === 'receiver' && isOwner) || (role === 'sender' && !isOwner);
         const align = isCurrentUserSender ? 'justify-end' : '';
-        const bubbleColor = isCurrentUserSender ? 'bg-blue-100 text-blue-900' : 'bg-gray-100';
+        const bubbleColor = isCurrentUserSender ? 'bg-slate-100 text-slate-900' : 'bg-gray-100';
         const avatar = isOwner 
-            ? (role === 'receiver' ? '/images/logo.svg' : (req.ownerId.avatar || '/images/default-avatar.png'))
-            : (role === 'sender' ? '/images/logo.svg' : (req.renterId.avatar || '/images/default-avatar.png'));
+            ? (role === 'receiver' ? '/images/avatar.webp' : (req.ownerId.avatar || '/images/avatar.webp'))
+            : (role === 'sender' ? '/images/avatar.webp' : (req.renterId.avatar || '/images/avatar.webp'));
         const name = isCurrentUserSender ? 'You' : (isOwner ? req.ownerId.name : req.renterId.name);
 
         bubbles.push(`
-            <div class="flex items-start mb-4 ${align}">
-                ${!isCurrentUserSender ? `<img src="${avatar}" class="w-10 h-10 rounded-full mr-3" alt="${name}">` : ''}
-                <div>
-                    <div class="${bubbleColor} rounded-lg px-4 py-2 max-w-xs ${isCurrentUserSender ? 'text-right' : ''}">
-                        <div class="font-semibold">${msg.type === 'modify' ? 'Modification' : msg.type.charAt(0).toUpperCase() + msg.type.slice(1)}</div>
-                        <div class="text-xs text-gray-500 mb-1">${name} • ${new Date(msg.timestamp).toLocaleString()}</div>
-                        <div class="text-sm"><span class="font-semibold">Rental Interval:</span> ${msg.rentalPeriod.startDate} to ${msg.rentalPeriod.endDate}</div>
-                        <div class="text-sm"><span class="font-semibold">Meeting Place:</span> ${msg.meetingDetails.location}</div>
-                        <div class="text-sm"><span class="font-semibold">Meeting Time:</span> ${msg.meetingDetails.date} ${msg.meetingDetails.time}</div>
-                        <div class="text-sm"><span class="font-semibold">Notes:</span> ${msg.meetingDetails.notes || 'None'}</div>
-                        ${msg.message ? `<div class="text-sm mt-2">${msg.message}</div>` : ''}
+            <div class="flex items-start mb-6 ${align}">
+                ${!isCurrentUserSender ? `<img src="${avatar}" class="w-12 h-12 rounded-full mr-4" alt="${name}">` : ''}
+                <div class="flex-1">
+                    <div class="flex items-center ${isCurrentUserSender ? 'justify-end' : ''} mb-1">
+                        <span class="text-sm text-gray-600">${name} • ${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="${bubbleColor} rounded-lg px-5 py-4 ${isCurrentUserSender ? 'ml-auto border border-slate-200' : ''} max-w-[80%] shadow-sm">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2 mb-3">
+                            <div class="font-semibold text-base ${isCurrentUserSender ? 'text-slate-800' : 'text-gray-800'}">
+                                ${msg.type === 'modify' ? 'Modification Request' : 'Request'}
+                            </div>
+                            <div class="text-xs text-gray-500">${formatDate(msg.timestamp)}</div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex flex-col">
+                                <div class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">Rental Period</div>
+                                <div class="text-sm">
+                                    ${formatDate(msg.rentalPeriod.startDate)} - ${formatDate(msg.rentalPeriod.endDate)}
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col">
+                                <div class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">Meeting Details</div>
+                                <div class="text-sm mb-1">
+                                    ${formatDate(msg.meetingDetails.date)} at ${formatTime(msg.meetingDetails.time)}
+                                </div>
+                                <div class="text-sm flex items-center">
+                                    <i class="fas fa-location-dot text-primary-500 mr-2"></i>
+                                    ${msg.meetingDetails.location}
+                                </div>
+                            </div>
+                            
+                            ${msg.meetingDetails.notes ? `
+                                <div class="flex flex-col">
+                                    <div class="text-xs uppercase tracking-wide text-gray-500 font-medium mb-1">Notes</div>
+                                    <div class="text-sm">${msg.meetingDetails.notes}</div>
+                                </div>
+                            ` : ''}
+                            
+                            
+                        </div>
                     </div>
                 </div>
-                ${isCurrentUserSender ? `<img src="${avatar}" class="w-10 h-10 rounded-full ml-3" alt="${name}">` : ''}
+                ${isCurrentUserSender ? `<img src="${avatar}" class="w-12 h-12 rounded-full ml-4" alt="${name}">` : ''}
             </div>
         `);
     });
@@ -149,7 +272,7 @@ function showRequestDetails(req, role) {
     // Show different buttons based on role and status
     let actionButtons = '';
     
-    if(req.status !== 'accepted' && req.status !== 'rejected'){
+    if(req.status !== 'accepted' && req.status !== 'rejected' && req.status !== 'ongoing' && req.status !== 'completed'){
         if (isLastMessageFromUser && role == 'receiver') {
             // If the last message is from the current user, they can only modify
             actionButtons = `
@@ -212,6 +335,7 @@ function getStatusTextClass(status) {
         case 'accepted': return 'text-green-600';
         case 'rejected': return 'text-red-600';
         case 'modified': return 'text-blue-600';
+        case 'ongoing': return 'text-purple-600';
         default: return 'text-gray-600';
     }
 }
@@ -433,3 +557,46 @@ window.onload = async function() {
     // Set up polling for updates
     setInterval(pollNotifications, 5000);
 };
+
+// Add this function after the existing functions
+async function confirmPickup(rentalId) {
+    const code = document.getElementById('pickupCode').value.trim();
+    
+    if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+        alert('Please enter a valid 6-digit code');
+        return;
+    }
+    
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    try {
+        // For demo purposes, accept any valid 6-digit code
+        const res = await fetch(`${API_URL}/rentals/${rentalId}/confirm-pickup`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pickupCode: code })
+        });
+        
+        if (!res.ok) throw new Error('Failed to confirm pickup');
+        const data = await res.json();
+        
+        // Update the request in the local arrays
+        updateRequestInList(data.rental);
+        
+        // Refresh the UI
+        refreshUI();
+        
+        alert('Pickup confirmed successfully!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// Add this helper function to generate a consistent pickup code based on rental ID
+function generatePickupCode(rentalId) {
+    // Use the last 6 characters of the rental ID as the code
+    // In a real application, this should be generated and stored securely
+    return rentalId.slice(-6).padStart(6, '0');
+}

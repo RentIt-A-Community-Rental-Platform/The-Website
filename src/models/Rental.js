@@ -17,7 +17,7 @@ const rentalSchema = new mongoose.Schema({
     startDate: { type: Date, required: true },
     endDate:   { type: Date, required: true }
   },
-  status:     { type: String, enum: ['pending','accepted','rejected','completed','modified'], default: 'pending' },
+  status:     { type: String, enum: ['pending','accepted','rejected','completed','modified','ongoing'], default: 'pending' },
   totalPrice: { type: Number, required: true },
   createdAt:  { type: Date, default: Date.now },
   chatHistory: [ ChatEntrySchema ],

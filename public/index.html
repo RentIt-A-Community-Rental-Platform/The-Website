@@ -299,16 +299,20 @@
                 document.getElementById('endDate').value = e.target.value;
             }
         });
-        let excludeUserId=null;
-        const dataAuth = authService.checkAuthStatus();
-        if (dataAuth.isAuthenticated) {
-            excludeUserId = dataAuth.user._id;
-        }
-        console.log("excludeUserId: " + excludeUserId);
         
         // Fetch and display items
         async function loadItems() {
             try {
+                
+                let excludeUserId=null;
+                const dataAuth = await authService.checkAuthStatus();
+                if (dataAuth.isAuthenticated) {
+                    excludeUserId = dataAuth.user._id;
+                    console.log('inside: ',dataAuth)
+                }
+                console.log("excludeUserId: " + excludeUserId);
+                
+
                 const items = await ItemService.getItems(null,excludeUserId);
                 allItems = items;
                 displayItems(items);

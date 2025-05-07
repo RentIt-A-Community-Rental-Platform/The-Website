@@ -42,6 +42,9 @@ router.get('/', async (req, res) => {
         } else if (req.query.excludeUserId) {
             items = await Item.find({userId:{ $ne: req.query.excludeUserId }}).sort({ createdAt: -1 });
         }
+        else {
+            items = await Item.find({}).sort({ createdAt: -1 });
+        }
         
         res.json(items);
     } catch (error) {

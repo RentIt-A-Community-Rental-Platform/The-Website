@@ -6,21 +6,31 @@ class AuthService {
     async checkAuthStatus() {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         try {
-            const response = await fetch(`${this.API_URL}/auth/status`, {
+            const response = await fetch(`${this.API_URL}/auth/me`, {
                 headers: {
                     'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
 
             const data = await response.json();
-            if (data.isAuthenticated && data.user) {
+            if (data.user) {
+                // Store user data in session storage
                 sessionStorage.setItem('user', JSON.stringify(data.user));
+                return {
+                    isAuthenticated: true,
+                    user: {
+                        _id: data.user._id,
+                        name: data.user.name,
+                        email: data.user.email
+                    }
+                };
             } else {
                 sessionStorage.removeItem('user');
+                return { isAuthenticated: false };
             }
-            return data;
         } catch (error) {
             console.error('Auth check error:', error);
+            sessionStorage.removeItem('user');
             return { isAuthenticated: false };
         }
     }

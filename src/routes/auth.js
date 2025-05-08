@@ -1,114 +1,39 @@
 import express from 'express';
 import passport from '../config/passport.js';
-import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
-import bcrypt from 'bcryptjs';
+import { AuthService } from '../services/AuthService.js';
 
 const router = express.Router();
+const authService = new AuthService();
 
 console.log('> Auth routes initialized');
-
-// Hardcoded test credentials - PLAIN TEXT for testing
-// const TEST_USER = {
-//     email: 'test@test.com',
-//     password: 'test123',
-//     name: 'Test User',
-//     // isTestUser: true  // Mark as test user to skip password hashing
-// };
-
-// // Create test user on server start
-// async function createTestUser() {
-//     try {
-//         // Check if test user exists
-//         let testUser = await User.findOne({ email: TEST_USER.email });
-
-//         if (!testUser) {
-//             // Create new test user with plain text password
-//             testUser = new User(TEST_USER);
-//             await testUser.save();
-//             console.log('✅ Test user created successfully');
-//         }
-//     } catch (error) {
-//         console.error('Failed to create test user:', error);
-//     }
-// }
-
-// // Initialize test user
-// createTestUser();
 
 // Register
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, name } = req.body;
-        
-        // Create user with hashed password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        
-        const user = new User({ 
-            email, 
-            password: hashedPassword, 
-            name 
-        });
-        
-        await user.save();
-        
-        // Generate JWT token
-        const token = jwt.sign(
-            { id: user._id, email: user.email },
-            process.env.JWT_SECRET || 'your-jwt-secret-key',
-            { expiresIn: '7d' }
-        );
-        
-        res.status(201).json({ 
-            user: {  _id: user._id, email, name },
-            token
-        });
+        const result = await authService.register(req.body);
+        res.status(201).json(result);
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ error: 'Registration failed' });
+        res.status(500).json({ error: error.message });
     }
 });
 
 // Login
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        
-        // Find user by email
-        const user = await User.findOne({ email });
-        
-        if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        
-        // Generate JWT token with consistent field names
-        const token = jwt.sign(
-            { _id: user._id, email: user.email },  // Use _id instead of id
-            process.env.JWT_SECRET || 'your-jwt-secret-key',
-            { expiresIn: '7d' }
-        );
+        const result = await authService.login(req.body);
         
         // Store user in session for traditional auth
-        req.login(user, (err) => {
+        req.login(result.user, (err) => {
             if (err) {
                 console.error('Session login error:', err);
             }
         });
         
-        res.json({ 
-            user: {  _id: user._id, email: user.email, name: user.name },
-            token
-        });
+        res.json(result);
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -155,31 +80,11 @@ router.patch('/update-username', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Verify current password
-        const isPasswordValid = await user.comparePassword(currentPassword);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Current password is incorrect' });
-        }
-
-        // Check if name is already taken
-        const existingUser = await User.findOne({ name: newName });
-        if (existingUser && existingUser._id.toString() !== userId.toString()) {
-            return res.status(400).json({ error: 'Name is already taken' });
-        }
-
-        // Update name
-        user.name = newName;
-        await user.save();
-
-        res.status(200).json({ message: 'Name updated successfully' });
+        const result = await authService.updateUsername(userId, newName, currentPassword);
+        res.status(200).json(result);
     } catch (error) {
         console.error('> Error updating name:', error);
-        res.status(500).json({ error: 'Failed to update name' });
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -193,25 +98,11 @@ router.patch('/update-password', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Verify current password
-        const isPasswordValid = await user.comparePassword(currentPassword);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Current password is incorrect' });
-        }
-
-        // Update password
-        user.password = newPassword;
-        await user.save();
-
-        res.status(200).json({ message: 'Password updated successfully' });
+        const result = await authService.updatePassword(userId, currentPassword, newPassword);
+        res.status(200).json(result);
     } catch (error) {
         console.error('> Error updating password:', error);
-        res.status(500).json({ error: 'Failed to update password' });
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -336,4 +227,4 @@ router.get('/status', (req, res) => {
     res.json({ isAuthenticated: false });
 });
 
-export const authRoutes = router; 
+export const authRoutes = router;

@@ -72,6 +72,8 @@
     import ItemService from './services/ItemService.js';
     // Make ItemService available globally
     window.ItemService = ItemService;
+    window.editListing = editListing;
+    window.deleteListing = deleteListing;
 
     const API_URL = 'http://localhost:3000';
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -148,12 +150,11 @@
     function setupUserMenu() {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const userIconContainer = document.getElementById('userIconContainer');
-      const loginLink = document.getElementById('loginLink');
+
       const userDisplayName = document.getElementById('userDisplayName');
 
       if (token) {
         userIconContainer.classList.remove('hidden');
-        loginLink.classList.add('hidden');
 
         const userData = sessionStorage.getItem('user');
         if (userData) {
@@ -166,7 +167,6 @@
         }
       } else {
         userIconContainer.classList.add('hidden');
-        loginLink.classList.remove('hidden');
       }
 
       const userMenuButton = document.getElementById('userMenuButton');

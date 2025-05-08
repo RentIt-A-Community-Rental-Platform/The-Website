@@ -21,8 +21,10 @@ const rentalSchema = new mongoose.Schema({
   totalPrice: { type: Number, required: true },
   createdAt:  { type: Date, default: Date.now },
   chatHistory: [ ChatEntrySchema ],
-  // Add this field to your schema
-  lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // Add review status fields
+  ownerReviewed: { type: Boolean, default: false },
+  renterReviewed: { type: Boolean, default: false }
 });
 
 export const Rental = mongoose.model('Rental', rentalSchema);

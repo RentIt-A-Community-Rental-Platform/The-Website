@@ -81,13 +81,23 @@ export class RentalService extends BaseService {
         }
     }
 
-    async getUserRequests(userId) {
+    async getUserRequests(userId,statuses=null) {
         try {
-            return await this.model.find({
-                renterId: userId
-            })
-            .populate('itemId')
-            .populate('ownerId');
+            if (statuses) {
+                return await this.model.find({
+                    renterId: userId,
+                    status: { $in: statuses }
+                })
+               .populate('itemId')
+              .populate('ownerId');
+            }
+            else{
+                return await this.model.find({
+                    renterId: userId
+                })
+                .populate('itemId')
+                .populate('ownerId');
+            }
         } catch (error) {
             throw new Error(`Error fetching user requests: ${error.message}`);
         }
@@ -224,6 +234,35 @@ export class RentalService extends BaseService {
             return rental;
         } catch (error) {
             throw new Error(`Error confirming return: ${error.message}`);
+        }
+    }
+
+    async getRequestsByStatus(userId,status) {
+        try {
+            return await this.model.find({
+                ownerId: userId,
+                status: status
+            })
+            .populate('itemId')
+            .populate('renterId')
+            .populate('ownerId');
+        } catch (error) {
+            throw new Error(`Error fetching requests with status ${status}: ${error.message}`);
+        }
+    }
+
+    // If you need multiple statuses
+    async getRequestsByStatuses(userId,statuses) {
+        try {
+            return await this.model.find({
+                ownerId: userId,
+                status: { $in: statuses }
+            })
+            .populate('itemId')
+            .populate('renterId')
+            .populate('ownerId');
+        } catch (error) {
+            throw new Error(`Error fetching requests with statuses ${statuses.join(', ')}: ${error.message}`);
         }
     }
 }

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>User Listings - RentIt</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50">
   <nav class="bg-white shadow-lg px-4 py-3">
@@ -17,19 +18,207 @@
   </nav>
 
   <div class="max-w-7xl mx-auto px-4 py-10">
-    <h1 class="text-3xl font-bold mb-6" id="userHeading">Listings by User</h1>
+    <!-- User Profile Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <div class="flex items-center space-x-6">
+        <div class="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
+          <img 
+            id="userProfileImage" 
+            src="/images/happy-avatar.png" 
+            alt="User profile" 
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <div>
+          <h1 class="text-3xl font-bold mb-2" id="userHeading">Loading...</h1>
+          <div class="flex items-center space-x-2">
+            <div class="flex items-center">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span id="userRating" class="ml-1 font-semibold">0.0</span>
+            </div>
+            <span id="reviewCount" class="text-gray-500">(0 reviews)</span>
+          </div>
+          <p id="userStats" class="text-gray-500 mt-1">
+            <span class="mr-4">Items Listed: <span id="listedCount">0</span></span>
+            <span>Items Rented: <span id="rentedCount">0</span></span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <h2 class="text-2xl font-bold mb-6">Reviews</h2>
+      <div id="reviewsContainer" class="space-y-6">
+        <!-- Reviews will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Listings Section -->
+    <h2 class="text-2xl font-bold mb-6">Listings</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" id="userListingsGrid"></div>
   </div>
 
-  <script>
+  <script type="module">
     const API_URL = 'http://localhost:3000';
-  
+    
+    window.loadUserProfile = loadUserProfile;
+    window.loadUserListings = loadUserListings;
+    
+
     function getQueryParams() {
       const params = new URLSearchParams(window.location.search);
       return {
         userId: params.get('userId'),
         name: decodeURIComponent(params.get('name') || '')
       };
+    }
+  
+    async function loadUserProfile() {
+      const { userId, name } = getQueryParams();
+      
+      if (!userId) {
+        document.getElementById('userHeading').textContent = 'User not found';
+        // return;
+      }
+
+      try {
+        // Load user profile
+        const userRes = await fetch(`${API_URL}/users/${userId}`);
+        const user = await userRes.json();
+        console.log("USR: ",user); // Log the user object to the console for inspection
+        
+        document.getElementById('userHeading').textContent = `${user.name}`;
+        
+        // Load user reviews
+        const reviewsRes = await fetch(`${API_URL}/review/user/${userId}`);
+        const reviews = await reviewsRes.json();
+        console.log("REV: ",reviews); // Log the reviews object to the console for inspection
+        
+        const averageRating = reviews.length > 0 
+          ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length 
+          : 0;
+        
+        document.getElementById('userRating').textContent = averageRating.toFixed(1);
+        document.getElementById('reviewCount').textContent = `(${reviews.length} reviews)`;
+        
+        // Render reviews
+        const reviewsContainer = document.getElementById('reviewsContainer');
+        if (reviews.length === 0) {
+          reviewsContainer.innerHTML = '<p class="text-gray-500">No reviews yet.</p>';
+        } else {
+          // Separate reviews by role
+          const ownerReviews = reviews.filter(review => review.role === 'owner');
+          const renterReviews = reviews.filter(review => review.role === 'renter');
+
+          reviewsContainer.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Owner Reviews -->
+              <div>
+                <h3 class="text-xl font-semibold mb-4">Reviews as Owner</h3>
+                ${ownerReviews.length === 0 ? 
+                  '<p class="text-gray-500">No reviews as owner yet.</p>' :
+                  ownerReviews.map(review => `
+                    <div class="border-b pb-6 mb-6">
+                      <div class="flex items-start space-x-4">
+                        <div class="w-20 h-20 flex-shrink-0">
+                          <img src="${review.rentalId?.itemId?.photos?.[0] || 'images/placeholder.svg'}" 
+                               alt="Item" 
+                               class="w-full h-full object-cover rounded-lg shadow-sm"
+                          />
+                        </div>
+                        <div class="flex-grow">
+                          <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                              <span class="font-semibold">${review.reviewerId.name}</span>
+                              <span class="text-sm text-gray-500">
+                                Renter
+                              </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                              <div class="flex">
+                                ${Array.from({ length: 5 }, (_, i) => `
+                                  <i class="fas fa-star ${i < review.rating ? 'text-yellow-400' : 'text-gray-200'}"></i>
+                                `).join('')}
+                              </div>
+                              <span class="text-gray-500">${new Date(review.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <h4 class="text-sm font-medium text-gray-700 mb-1">
+                            ${review.rentalId?.itemId?.title || 'Item'}
+                          </h4>
+                          <p class="text-gray-600">${review.reviewText}</p>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+              </div>
+
+              <!-- Renter Reviews -->
+              <div>
+                <h3 class="text-xl font-semibold mb-4">Reviews as Renter</h3>
+                ${renterReviews.length === 0 ? 
+                  '<p class="text-gray-500">No reviews as renter yet.</p>' :
+                  renterReviews.map(review => `
+                    <div class="border-b pb-6 mb-6">
+                      <div class="flex items-start space-x-4">
+                        <div class="w-20 h-20 flex-shrink-0">
+                          <img src="${review.rentalId?.itemId?.photos?.[0] || 'images/placeholder.svg'}" 
+                               alt="Item" 
+                               class="w-full h-full object-cover rounded-lg shadow-sm"
+                          />
+                        </div>
+                        <div class="flex-grow">
+                          <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                              <span class="font-semibold">${review.reviewerId.name}</span>
+                              <span class="text-sm text-gray-500">
+                                Owner
+                              </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                              <div class="flex">
+                                ${Array.from({ length: 5 }, (_, i) => `
+                                  <i class="fas fa-star ${i < review.rating ? 'text-yellow-400' : 'text-gray-200'}"></i>
+                                `).join('')}
+                              </div>
+                              <span class="text-gray-500">${new Date(review.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <h4 class="text-sm font-medium text-gray-700 mb-1">
+                            ${review.rentalId?.itemId?.title || 'Item'}
+                          </h4>
+                          <p class="text-gray-600">${review.reviewText}</p>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Load user listings
+        await loadUserListings();
+
+      } catch (err) {
+        console.error('Failed to load user profile:', err);
+      }
+    }
+    
+    // Load rental statistics
+    try {
+        const userId = new URLSearchParams(window.location.search).get('userId');
+        const statsResponse = await fetch(`${API_URL}/rentals/user-stats/${userId}`);
+        
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            console.log('stats',stats);
+            document.getElementById('listedCount').textContent = stats.listedCount;
+            document.getElementById('rentedCount').textContent = stats.rentedCount;
+        }
+    } catch (error) {
+        console.error('Error loading rental statistics:', error);
     }
   
     async function loadUserListings() {
@@ -40,7 +229,7 @@
         return;
       }
   
-      document.getElementById('userHeading').textContent = `Listings by ${name}`;
+      // document.getElementById('userHeading').textContent = `Listings by ${name}`;
   
       const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
       const loggedInUserId = currentUser?._id || currentUser?.id;
@@ -51,47 +240,79 @@
   
         const grid = document.getElementById('userListingsGrid');
         if (items.length === 0) {
-          grid.innerHTML = `<p class="text-gray-500">This user has no listings yet.</p>`;
+          grid.innerHTML = '<p class="text-gray-500">No items listed yet.</p>';
           return;
         }
   
-        grid.innerHTML = items.map(item => {
-        const isOwnItem = item.userId === loggedInUserId;
+        grid.innerHTML = items.map(item => `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
+                ${item.photos && item.photos.length > 0 
+                    ? `<img src="${item.photos[0]}" alt="${item.title}" class="w-full h-48 object-cover">`
+                    : `<div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-image text-gray-400 text-4xl"></i>
+                    </div>`
+                }
+                <div class="p-4 flex flex-col flex-grow">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-lg">${item.title}</h3>
+                        <span class="text-sm px-2 py-1 bg-gray-100 rounded-full">${item.category}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4 flex-grow">${item.description}</p>
+                    <p class="text-blue-600 font-bold">$${item.price}/day</p>
+                    <p class="text-gray-500 text-sm mb-4">Deposit: $${item.deposit}</p>
 
-        return `
-          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
-  <img src="${item.photos?.[0] || 'https://via.placeholder.com/300'}" class="w-full h-48 object-cover" />
-  <div class="p-4 flex flex-col flex-grow">
-    <div class="flex items-center justify-between mb-2">
-      <h3 class="text-lg font-semibold">${item.title}</h3>
-      <span class="text-sm px-2 py-1 bg-gray-100 rounded-full">${item.category}</span>
-    </div>
-    <p class="text-gray-600 text-sm mb-4 flex-grow">${item.description}</p>
-    
-    <div class="flex justify-between items-end mt-auto">
-      <div>
-        <p class="text-blue-600 font-bold">$${item.price}/day</p>
-        <p class="text-gray-500 text-sm">Deposit: $${item.deposit}</p>
-      </div>
-      <button onclick="window.location.href='/item.html?id=${item._id}'" 
-              class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
-              style="background-color: #3b82f6;">
-        Rent Now
-      </button>
-    </div>
-  </div>
-</div>
-
-        `;
-      }).join('');
-
-      } catch (err) {
+                    ${loggedInUserId === userId ? `
+                        <div class="mt-auto flex justify-between gap-2">
+                            <button onclick="editListing('${item._id}')" 
+                                    class="w-1/2 px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500">
+                                Edit
+                            </button>
+                            <button onclick="deleteListing('${item._id}')" 
+                                    class="w-1/2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                                Delete
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
         console.error('Failed to load user listings:', err);
-        document.getElementById('userListingsGrid').innerHTML = '<p class="text-red-500">Error loading listings.</p>';
-      }
     }
+}
+
+// Add these functions for edit and delete functionality
+function editListing(itemId) {
+    window.location.href = `/edit-listing.html?id=${itemId}`;
+}
+
+async function deleteListing(itemId) {
+    if (confirm('Are you sure you want to delete this listing?')) {
+        try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const response = await fetch(`${API_URL}/items/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete item');
+            }
+
+            alert('Item deleted successfully.');
+            loadUserListings(); // refresh the grid
+        } catch (err) {
+            console.error(err);
+            alert('Something went wrong. Could not delete the listing.');
+        }
+    }
+}
   
-    document.addEventListener('DOMContentLoaded', loadUserListings);
+    loadUserProfile();
+    window.editListing = editListing;
+    window.deleteListing = deleteListing;
   </script>
   
 </body>

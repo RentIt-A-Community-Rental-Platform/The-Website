@@ -83,10 +83,14 @@
         deposit: parseFloat(document.getElementById('deposit').value)
       };
 
+      console.log(updatedItem);
       try {
-        await ItemService.updateItem(itemId, updatedItem);
+        
+        const data = await ItemService.updateItem(itemId, updatedItem);
+
         alert('Listing updated successfully.');
-        window.location.href = '/my-listings.html';
+        window.location.href = `/user-listings.html?userId=${data.userId}`;
+        
       } catch (error) {
         alert('Failed to update listing.');
       }

@@ -13,6 +13,8 @@ import cloudinaryUpload from './routes/cloudinaryUpload.js';
 import geminiRoutes from './routes/geminiRoutes.js';
 import { mkdirSync } from 'fs';
 import { rentalRoutes } from './routes/rentals.js';
+import { reviewRoutes } from './routes/review.js';
+import { userRoutes } from './routes/users.js';
 
 // Load environment variables
 dotenv.config();
@@ -101,8 +103,10 @@ try {
 app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
 app.use('/rentals', rentalRoutes);
+app.use('/users', userRoutes); // Add this line
 app.use('/api', cloudinaryUpload); // /api/upload-image
 app.use('/api/gemini', geminiRoutes); //api for gemini
+app.use('/review', reviewRoutes);
 
 // Protected dashboard example
 app.get('/dashboard', (req, res) => {
@@ -149,8 +153,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Register routes
-app.use('/rentals', rentalRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;

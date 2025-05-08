@@ -67,7 +67,8 @@ router.put('/:id', isAuthenticated, async (req, res) => {
         }
 
         const updatedItem = await itemService.update(itemId, updateData);
-        res.json(updatedItem);
+        // Add userId to the response
+        res.json({ ...updatedItem.toObject(), userId: userId });
     } catch (error) {
         console.error('Error updating item:', error);
         res.status(500).json({ error: 'Failed to update item' });

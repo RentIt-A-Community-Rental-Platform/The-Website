@@ -1,7 +1,7 @@
 {
-  "name": "university-rental-platform",
+  "name": "rentit",
   "version": "1.0.0",
-  "description": "A platform for university students to rent items",
+  "description": "A community rental platform",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

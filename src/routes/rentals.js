@@ -112,5 +112,24 @@ router.post('/:id/confirm-return', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get rental statistics for a user
+router.get('/user-stats/:userId', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const rentedItems = await rentalService.getUserRequests(userId,['accepted','ongoing','completed']);
+        const listedItems = await rentalService.getRequestsByStatuses(userId,['accepted','ongoing','completed']);
+        console.log("RENTED ITEMS\n\n",rentedItems);
+        console.log("LISTED ITEMS\n\n",listedItems);
+        
+        res.json({
+            rentedCount: rentedItems.length,
+            listedCount: listedItems.length
+        });
+    } catch (error) {
+        console.error('Error fetching user rental statistics:', error);
+        res.status(500).json({ error: 'Failed to fetch rental statistics' });
+    }
+});
+
 export default router;
 export const rentalRoutes = router;

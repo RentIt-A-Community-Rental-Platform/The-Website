@@ -205,6 +205,46 @@ function showRequestDetails(req, role) {
                         </div>
                     </div>
                 ` : ''}
+                
+                ${req.status === 'completed' && 
+                  ((role === 'sender' && !req.renterReviewed) || 
+                   (role === 'receiver' && !req.ownerReviewed)) ? `
+                    <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <h3 class="font-medium text-blue-800 mb-2">Leave a Review</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm text-gray-600">Rating:</span>
+                                <div class="flex items-center">
+                                    ${[1, 2, 3, 4, 5].map(star => `
+                                        <button 
+                                            type="button"
+                                            class="star-rating p-1"
+                                            data-rating="${star}"
+                                            onclick="setRating(${star})"
+                                        >
+                                            <i class="fas fa-star text-gray-300 hover:text-yellow-400"></i>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <textarea 
+                                    id="reviewText" 
+                                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500" 
+                                    rows="3" 
+                                    placeholder="Write your review here..."
+                                    maxlength="1000"
+                                ></textarea>
+                            </div>
+                            <button 
+                                onclick="submitReview('${req._id}', '${role === 'receiver'?'renter':'owner'}')" 
+                                class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                                Submit Review
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
@@ -941,4 +981,57 @@ async function confirmPickup(rentalId) {
 function generatePickupCode(rentalId) {
     // Generate a 6-digit random number
     return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+let selectedRating = 0;
+
+function setRating(rating) {
+    selectedRating = rating;
+    const stars = document.querySelectorAll('.star-rating i');
+    stars.forEach((star, index) => {
+        star.classList.toggle('text-yellow-400', index < rating);
+        star.classList.toggle('text-gray-300', index >= rating);
+    });
+}
+
+async function submitReview(rentalId, role) {
+    if (!selectedRating) {
+        alert('Please select a rating');
+        return;
+    }
+
+    const reviewText = document.getElementById('reviewText').value.trim();
+    if (!reviewText) {
+        alert('Please write a review');
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const response = await fetch(`${API_URL}/review/${rentalId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                rating: selectedRating,
+                reviewText,
+                role
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to submit review');
+        }
+
+        alert('Review submitted successfully!');
+        // Refresh the page or update UI as needed
+        location.reload();
+
+    } catch (error) {
+        console.error('Error submitting review:', error);
+        alert(error.message);
+    }
 }

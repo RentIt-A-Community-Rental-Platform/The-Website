@@ -36,12 +36,12 @@ function renderRequestsList(requests) {
         const div = document.createElement('div');
         div.className = 'p-4 border-b cursor-pointer hover:bg-gray-100';
         div.innerHTML = `
-            <div class="font-semibold">${req.itemId.title}</div>
-            <div class="text-sm text-gray-500">From: ${req.renterId.name}</div>
-            <div class="text-xs mt-1 ${getStatusBadgeClass(req.status)}">${req.status.toUpperCase()}</div>
+            <div class="font-semibold">${req.itemId?.title || 'Deleted Item'}</div>
+            <div class="text-sm text-gray-500">From: ${req.renterId?.name || 'Unknown User'}</div>
+            <div class="text-xs mt-1 ${getStatusBadgeClass(req.status || 'pending')}">${(req.status || 'pending').toUpperCase()}</div>
         `;
         div.onclick = () => {
-            selectedRequestId = req._id;
+            selectedRequestId = req._id || null;
             showRequestDetails(req, 'receiver');
         };
         list.appendChild(div);
@@ -59,7 +59,7 @@ function renderSenderRequestsList(requests) {
         list.innerHTML += '<div class="p-4 text-gray-500">You haven\'t made any requests yet.</div>';
         return;
     }
-    
+    console.log("KIRE");
     requests.forEach(req => {
         const div = document.createElement('div');
         div.className = 'p-4 border-b cursor-pointer hover:bg-gray-100';
@@ -922,10 +922,12 @@ function pollNotifications() {
 window.onload = async function() {
     // Fetch both types of requests
     requests = await fetchRequests();
+    console.log('req',requests);
     myRequests = await fetchMyRequests();
     console.log(requests, myRequests);
     // Render both lists
     renderRequestsList(requests);
+    console.log('hehe');
     renderSenderRequestsList(myRequests);
     
     // Show details for the first request if available

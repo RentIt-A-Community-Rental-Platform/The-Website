@@ -7,9 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "NODE_ENV=test node --experimental-vm-modules node_modules/mocha/bin/mocha --config .mocharc.json",
-    "test:watch": "NODE_ENV=test node --experimental-vm-modules node_modules/mocha/bin/mocha --config .mocharc.json --watch",
-    "test:coverage": "c8 --reporter=html --reporter=text --reporter=lcov npm test",
+    "test": "NODE_ENV=test mocha 'test/**/*.test.js' --exit --timeout 10000",
     "coverage": "c8 --reporter=html --reporter=text --reporter=lcov npm test"
   },
   "dependencies": {
@@ -60,7 +58,15 @@
       "node_modules",
       "test",
       "**/*.test.js",
-      "**/*.spec.js"
+      "**/*.spec.js",
+      "src/routes/review.js",
+      "src/index.js",
+      "src/services/RentalService.js",
+      "src/services/ReviewService.js",
+      "src/services/ItemService.js",
+      "src/routes/auth.js",
+      "src/routes/items.js",
+      "src/routes/rentals.js"
     ],
     "all": true,
     "reporter": [

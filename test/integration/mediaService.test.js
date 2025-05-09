@@ -6,6 +6,8 @@ import { User } from '../../src/models/User.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fs from 'fs/promises';
+import { setupTestDB, teardownTestDB, clearCollections } from '../helpers/testUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,18 +18,16 @@ describe('MediaService', () => {
   let testUser;
 
   before(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    await setupTestDB();
     mediaService = new MediaService();
   });
 
   after(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
+    await teardownTestDB();
   });
 
   beforeEach(async () => {
+    await clearCollections();
     testUser = await User.create({
       email: 'test@example.com',
       password: 'password123',
@@ -35,101 +35,121 @@ describe('MediaService', () => {
     });
   });
 
-  afterEach(async () => {
-    await User.deleteMany({});
-  });
-
   describe('uploadFile', () => {
     it('should upload a file successfully', async () => {
       const testFilePath = path.join(__dirname, '../fixtures/test-image.jpg');
-      const result = await mediaService.uploadFile(testFilePath, testUser._id);
-      
+      const fileBuffer = await fs.readFile(testFilePath);
+
+      const result = await mediaService.uploadFile(fileBuffer, testUser._id);
+
+      expect(result).to.have.property('public_id');
+      expect(result).to.have.property('format');
+      expect(result).to.have.property('resource_type');
       expect(result).to.have.property('url');
-      expect(result).to.have.property('filename');
-      expect(result.url).to.be.a('string');
-      expect(result.filename).to.be.a('string');
     });
 
-    it('should throw error for non-existent file', async () => {
-      const nonExistentPath = path.join(__dirname, '../fixtures/nonexistent.jpg');
-      
-      try {
-        await mediaService.uploadFile(nonExistentPath, testUser._id);
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        expect(error.message).to.include('no such file or directory');
-      }
+    it('should upload a file with custom options', async () => {
+      const testFilePath = path.join(__dirname, '../fixtures/test-image.jpg');
+      const fileBuffer = await fs.readFile(testFilePath);
+      const options = {
+        folder: 'test-folder',
+        resource_type: 'image'
+      };
+
+      const result = await mediaService.uploadFile(fileBuffer, testUser._id, options);
+
+      expect(result).to.have.property('public_id');
+      expect(result.public_id).to.include('test-folder');
+      expect(result).to.have.property('format');
+      expect(result).to.have.property('resource_type', 'image');
     });
 
-    it('should throw error for invalid file type', async () => {
-      const testFilePath = path.join(__dirname, '../fixtures/test.txt');
-      
+    it('should throw error for invalid file buffer', async () => {
+      const invalidBuffer = Buffer.from('invalid data');
+
       try {
-        await mediaService.uploadFile(testFilePath, testUser._id);
+        await mediaService.uploadFile(invalidBuffer, testUser._id);
         expect.fail('Should have thrown an error');
       } catch (error) {
-        expect(error.message).to.include('Invalid file type');
+        expect(error.message).to.include('Error uploading file');
       }
     });
   });
 
   describe('deleteFile', () => {
-    let uploadedFile;
-
-    beforeEach(async () => {
-      const testFilePath = path.join(__dirname, '../fixtures/test-image.jpg');
-      uploadedFile = await mediaService.uploadFile(testFilePath, testUser._id);
-    });
-
     it('should delete a file successfully', async () => {
-      const result = await mediaService.deleteFile(uploadedFile.filename);
-      expect(result).to.be.true;
+      const testFilePath = path.join(__dirname, '../fixtures/test-image.jpg');
+      const fileBuffer = await fs.readFile(testFilePath);
+      const uploadedFile = await mediaService.uploadFile(fileBuffer, testUser._id);
+
+      const result = await mediaService.deleteFile(uploadedFile.public_id);
+
+      expect(result).to.have.property('result', 'ok');
     });
 
     it('should throw error for non-existent file', async () => {
       try {
-        await mediaService.deleteFile('nonexistent.jpg');
+        await mediaService.deleteFile('non-existent-file');
         expect.fail('Should have thrown an error');
       } catch (error) {
-        expect(error.message).to.include('File not found');
+        expect(error.message).to.include('Error deleting file');
+      }
+    });
+
+    it('should throw error for invalid public_id', async () => {
+      try {
+        await mediaService.deleteFile('');
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).to.include('Error deleting file');
+      }
+    });
+  });
+
+  describe('streamUpload', () => {
+    it('should handle stream upload error', async () => {
+      const invalidBuffer = Buffer.from('invalid data');
+
+      try {
+        await mediaService.streamUpload(invalidBuffer);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).to.include('Error uploading file');
       }
     });
   });
 
   describe('getUserFiles', () => {
-    beforeEach(async () => {
-      const testFilePath = path.join(__dirname, '../fixtures/test-image.jpg');
-      await mediaService.uploadFile(testFilePath, testUser._id);
-      await mediaService.uploadFile(testFilePath, testUser._id);
-    });
-
     it('should get all files for a user', async () => {
-      const files = await mediaService.getUserFiles(testUser._id);
-      expect(files).to.be.an('array');
-      expect(files).to.have.lengthOf(2);
-      expect(files[0]).to.have.property('url');
-      expect(files[0]).to.have.property('filename');
-    });
+      const testFilePath = path.join(__dirname, '../fixtures/test-image.jpg');
+      const fileBuffer = await fs.readFile(testFilePath);
+      await mediaService.uploadFile(fileBuffer, testUser._id);
 
-    it('should return empty array for user with no files', async () => {
-      const files = await mediaService.getUserFiles(new mongoose.Types.ObjectId());
-      expect(files).to.be.an('array').that.is.empty;
+      const files = await mediaService.getUserFiles(testUser._id);
+
+      expect(files).to.be.an('array');
+      expect(files[0]).to.have.property('public_id');
+      expect(files[0]).to.have.property('url');
     });
   });
 
   describe('validateFileType', () => {
-    it('should validate image file types', () => {
+    it('should validate image file types', async () => {
       const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      validTypes.forEach(type => {
-        expect(mediaService.validateFileType(type)).to.be.true;
-      });
+      
+      for (const type of validTypes) {
+        const isValid = await mediaService.validateFileType({ mimetype: type });
+        expect(isValid).to.be.true;
+      }
     });
 
-    it('should reject invalid file types', () => {
-      const invalidTypes = ['text/plain', 'application/pdf', 'video/mp4'];
-      invalidTypes.forEach(type => {
-        expect(mediaService.validateFileType(type)).to.be.false;
-      });
+    it('should reject invalid file types', async () => {
+      const invalidTypes = ['application/pdf', 'text/plain', 'video/mp4'];
+      
+      for (const type of invalidTypes) {
+        const isValid = await mediaService.validateFileType({ mimetype: type });
+        expect(isValid).to.be.false;
+      }
     });
   });
 }); 

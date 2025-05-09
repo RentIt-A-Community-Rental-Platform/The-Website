@@ -6,6 +6,7 @@ import { Review } from '../../src/models/Review.js';
 import { User } from '../../src/models/User.js';
 import { Item } from '../../src/models/Item.js';
 import { Rental } from '../../src/models/Rental.js';
+import { setupTestDB, teardownTestDB, clearCollections } from '../helpers/testUtils.js';
 
 describe('ReviewService', () => {
   let mongoServer;
@@ -15,26 +16,16 @@ describe('ReviewService', () => {
   let testRental;
 
   before(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    await setupTestDB();
     reviewService = new ReviewService();
   });
 
   after(async () => {
-    await mongoose.disconnect();
-    if (mongoServer) {
-      await mongoServer.stop();
-    }
+    await teardownTestDB();
   });
 
   beforeEach(async () => {
-    await Promise.all([
-      mongoose.connection.collections.users?.deleteMany({}),
-      mongoose.connection.collections.items?.deleteMany({}),
-      mongoose.connection.collections.rentals?.deleteMany({}),
-      mongoose.connection.collections.reviews?.deleteMany({})
-    ]);
+    await clearCollections();
 
     testUser = await User.create({
       email: 'test@example.com',
@@ -64,27 +55,61 @@ describe('ReviewService', () => {
   describe('createReview', () => {
     it('should create a review successfully', async () => {
       const reviewData = {
+        itemId: testItem._id,
+        userId: testUser._id,
         rating: 5,
-        comment: 'Great experience!',
-        rentalId: testRental._id,
-        reviewerId: testUser._id,
-        revieweeId: testItem.owner
+        comment: 'Great item, exactly as described!',
+        title: 'Excellent Experience'
       };
 
       const review = await reviewService.createReview(reviewData);
+
       expect(review).to.have.property('_id');
-      expect(review.rating).to.equal(reviewData.rating);
-      expect(review.comment).to.equal(reviewData.comment);
-      expect(review.rentalId.toString()).to.equal(testRental._id.toString());
+      expect(review).to.have.property('itemId', testItem._id);
+      expect(review).to.have.property('userId', testUser._id);
+      expect(review).to.have.property('rating', 5);
+      expect(review).to.have.property('comment', reviewData.comment);
+      expect(review).to.have.property('title', reviewData.title);
+    });
+
+    it('should throw error for non-existent item', async () => {
+      const reviewData = {
+        itemId: new mongoose.Types.ObjectId(),
+        userId: testUser._id,
+        rating: 5,
+        comment: 'Great item!'
+      };
+
+      try {
+        await reviewService.createReview(reviewData);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).to.include('Item not found');
+      }
+    });
+
+    it('should throw error for non-existent user', async () => {
+      const reviewData = {
+        itemId: testItem._id,
+        userId: new mongoose.Types.ObjectId(),
+        rating: 5,
+        comment: 'Great item!'
+      };
+
+      try {
+        await reviewService.createReview(reviewData);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).to.include('User not found');
+      }
     });
 
     it('should throw error for invalid rating', async () => {
       const reviewData = {
-        rating: 6, // Invalid rating
-        comment: 'Great experience!',
-        rentalId: testRental._id,
-        reviewerId: testUser._id,
-        revieweeId: testItem.owner
+        itemId: testItem._id,
+        userId: testUser._id,
+        rating: 6,
+        comment: 'Great item!'
       };
 
       try {
@@ -94,142 +119,101 @@ describe('ReviewService', () => {
         expect(error.message).to.include('Rating must be between 1 and 5');
       }
     });
-
-    it('should throw error for non-existent rental', async () => {
-      const reviewData = {
-        rating: 5,
-        comment: 'Great experience!',
-        rentalId: new mongoose.Types.ObjectId(),
-        reviewerId: testUser._id,
-        revieweeId: testItem.owner
-      };
-
-      try {
-        await reviewService.createReview(reviewData);
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        expect(error.message).to.equal('Rental not found');
-      }
-    });
   });
 
-  describe('getReviewsByUser', () => {
-    beforeEach(async () => {
-      await Review.create([
-        {
-          rating: 5,
-          comment: 'Great experience!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        },
-        {
-          rating: 4,
-          comment: 'Good experience!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        }
-      ]);
+  describe('getItemReviews', () => {
+    it('should get all reviews for an item', async () => {
+      await Review.create({
+        itemId: testItem._id,
+        userId: testUser._id,
+        rating: 5,
+        comment: 'Great item!',
+        title: 'Excellent'
+      });
+
+      const reviews = await reviewService.getItemReviews(testItem._id);
+
+      expect(reviews).to.be.an('array');
+      expect(reviews).to.have.lengthOf(1);
+      expect(reviews[0]).to.have.property('rating', 5);
+      expect(reviews[0]).to.have.property('comment', 'Great item!');
     });
 
-    it('should get all reviews for a user', async () => {
-      const reviews = await reviewService.getReviewsByUser(testUser._id);
-      expect(reviews).to.have.lengthOf(2);
-      reviews.forEach(review => {
-        expect(review.reviewerId.toString()).to.equal(testUser._id.toString());
-      });
-    });
-
-    it('should return empty array for user with no reviews', async () => {
-      const newUser = await User.create({
-        email: 'new@example.com',
-        password: 'password123',
-        name: 'New User'
-      });
-      const reviews = await reviewService.getReviewsByUser(newUser._id);
+    it('should return empty array for item with no reviews', async () => {
+      const reviews = await reviewService.getItemReviews(testItem._id);
       expect(reviews).to.be.an('array').that.is.empty;
     });
   });
 
-  describe('getReviewsForItem', () => {
-    beforeEach(async () => {
-      await Review.create([
-        {
-          rating: 5,
-          comment: 'Great item!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        },
-        {
-          rating: 4,
-          comment: 'Good item!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        }
-      ]);
+  describe('getUserReviews', () => {
+    it('should get all reviews by a user', async () => {
+      await Review.create({
+        itemId: testItem._id,
+        userId: testUser._id,
+        rating: 5,
+        comment: 'Great item!',
+        title: 'Excellent'
+      });
+
+      const reviews = await reviewService.getUserReviews(testUser._id);
+
+      expect(reviews).to.be.an('array');
+      expect(reviews).to.have.lengthOf(1);
+      expect(reviews[0]).to.have.property('rating', 5);
+      expect(reviews[0]).to.have.property('comment', 'Great item!');
     });
 
-    it('should get all reviews for an item', async () => {
-      const reviews = await reviewService.getReviewsForItem(testItem._id);
-      expect(reviews).to.have.lengthOf(2);
-      reviews.forEach(review => {
-        expect(review.rentalId.toString()).to.equal(testRental._id.toString());
-      });
-    });
-
-    it('should return empty array for item with no reviews', async () => {
-      const newItem = await Item.create({
-        title: 'New Item',
-        description: 'New Description',
-        price: 200,
-        category: 'Electronics',
-        condition: 'New',
-        owner: testUser._id
-      });
-      const reviews = await reviewService.getReviewsForItem(newItem._id);
+    it('should return empty array for user with no reviews', async () => {
+      const reviews = await reviewService.getUserReviews(testUser._id);
       expect(reviews).to.be.an('array').that.is.empty;
     });
   });
 
   describe('updateReview', () => {
-    let review;
-
-    beforeEach(async () => {
-      review = await Review.create({
+    it('should update a review successfully', async () => {
+      const review = await Review.create({
+        itemId: testItem._id,
+        userId: testUser._id,
         rating: 5,
-        comment: 'Great experience!',
-        rentalId: testRental._id,
-        reviewerId: testUser._id,
-        revieweeId: testItem.owner
+        comment: 'Great item!',
+        title: 'Excellent'
       });
-    });
 
-    it('should update review successfully', async () => {
-      const updateData = {
+      const updatedReview = await reviewService.updateReview(review._id, {
         rating: 4,
         comment: 'Updated comment'
-      };
+      });
 
-      const updatedReview = await reviewService.updateReview(review._id, updateData);
-      expect(updatedReview.rating).to.equal(updateData.rating);
-      expect(updatedReview.comment).to.equal(updateData.comment);
+      expect(updatedReview).to.have.property('rating', 4);
+      expect(updatedReview).to.have.property('comment', 'Updated comment');
     });
 
     it('should throw error for non-existent review', async () => {
       try {
-        await reviewService.updateReview(new mongoose.Types.ObjectId(), { rating: 4 });
+        await reviewService.updateReview(new mongoose.Types.ObjectId(), {
+          rating: 4,
+          comment: 'Updated comment'
+        });
         expect.fail('Should have thrown an error');
       } catch (error) {
-        expect(error.message).to.equal('Review not found');
+        expect(error.message).to.include('Review not found');
       }
     });
 
-    it('should throw error for invalid rating update', async () => {
+    it('should throw error for invalid rating', async () => {
+      const review = await Review.create({
+        itemId: testItem._id,
+        userId: testUser._id,
+        rating: 5,
+        comment: 'Great item!',
+        title: 'Excellent'
+      });
+
       try {
-        await reviewService.updateReview(review._id, { rating: 6 });
+        await reviewService.updateReview(review._id, {
+          rating: 6,
+          comment: 'Updated comment'
+        });
         expect.fail('Should have thrown an error');
       } catch (error) {
         expect(error.message).to.include('Rating must be between 1 and 5');
@@ -238,20 +222,17 @@ describe('ReviewService', () => {
   });
 
   describe('deleteReview', () => {
-    let review;
-
-    beforeEach(async () => {
-      review = await Review.create({
+    it('should delete a review successfully', async () => {
+      const review = await Review.create({
+        itemId: testItem._id,
+        userId: testUser._id,
         rating: 5,
-        comment: 'Great experience!',
-        rentalId: testRental._id,
-        reviewerId: testUser._id,
-        revieweeId: testItem.owner
+        comment: 'Great item!',
+        title: 'Excellent'
       });
-    });
 
-    it('should delete review successfully', async () => {
       await reviewService.deleteReview(review._id);
+
       const deletedReview = await Review.findById(review._id);
       expect(deletedReview).to.be.null;
     });
@@ -261,51 +242,8 @@ describe('ReviewService', () => {
         await reviewService.deleteReview(new mongoose.Types.ObjectId());
         expect.fail('Should have thrown an error');
       } catch (error) {
-        expect(error.message).to.equal('Review not found');
+        expect(error.message).to.include('Review not found');
       }
-    });
-  });
-
-  describe('getAverageRating', () => {
-    beforeEach(async () => {
-      await Review.create([
-        {
-          rating: 5,
-          comment: 'Great experience!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        },
-        {
-          rating: 4,
-          comment: 'Good experience!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        },
-        {
-          rating: 3,
-          comment: 'Average experience!',
-          rentalId: testRental._id,
-          reviewerId: testUser._id,
-          revieweeId: testItem.owner
-        }
-      ]);
-    });
-
-    it('should calculate average rating correctly', async () => {
-      const averageRating = await reviewService.getAverageRating(testItem.owner);
-      expect(averageRating).to.equal(4); // (5 + 4 + 3) / 3 = 4
-    });
-
-    it('should return 0 for user with no reviews', async () => {
-      const newUser = await User.create({
-        email: 'new@example.com',
-        password: 'password123',
-        name: 'New User'
-      });
-      const averageRating = await reviewService.getAverageRating(newUser._id);
-      expect(averageRating).to.equal(0);
     });
   });
 }); 

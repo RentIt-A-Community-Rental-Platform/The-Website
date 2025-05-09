@@ -15,7 +15,6 @@ import { mkdirSync } from 'fs';
 import { rentalRoutes } from './routes/rentals.js';
 import { reviewRoutes } from './routes/review.js';
 import { userRoutes } from './routes/users.js';
-import app from './app.js';
 
 // Load environment variables
 dotenv.config();
@@ -174,7 +173,3 @@ if (process.env.NODE_ENV !== 'test' && process.env.TEST_MODE !== 'true') {
 } else {
   console.log('\n> Running in test mode - server not started');
 }
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});

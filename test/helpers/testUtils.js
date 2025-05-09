@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
+import { User } from '../../src/models/User.js';
+import { Item } from '../../src/models/Item.js';
 
 let mongoServer;
 
@@ -51,91 +54,76 @@ export const teardownTestDB = async () => {
 };
 
 export const clearCollections = async () => {
-  await Promise.all([
-    mongoose.connection.collections.users?.deleteMany({}),
-    mongoose.connection.collections.items?.deleteMany({}),
-    mongoose.connection.collections.rentals?.deleteMany({}),
-    mongoose.connection.collections.reviews?.deleteMany({})
-  ]);
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
 };
 
-export const createTestUser = async (app, userData = {}) => {
-  const defaultUserData = {
+export const createTestUser = async (app) => {
+  const userData = {
     email: 'test@example.com',
     password: 'password123',
-    name: 'Test User',
-    ...userData
+    name: 'Test User'
   };
 
-  await request(app)
-    .post('/auth/register')
-    .send(defaultUserData);
+  const user = await User.create(userData);
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
-  const loginResponse = await request(app)
-    .post('/auth/login')
-    .send({
-      email: defaultUserData.email,
-      password: defaultUserData.password
-    });
-
-  return {
-    user: defaultUserData,
-    token: loginResponse.body.token
-  };
+  return { user, token };
 };
 
-export const createTestItem = async (app, authToken, itemData = {}) => {
-  const defaultItemData = {
+export const createTestItem = async (app, authToken) => {
+  const itemData = {
     title: 'Test Item',
     description: 'This is a test item',
     price: 100,
     category: 'Electronics',
     condition: 'New',
-    ...itemData
+    location: 'New York',
+    availability: true
   };
 
   const response = await request(app)
     .post('/items')
     .set('Authorization', `Bearer ${authToken}`)
-    .send(defaultItemData);
+    .send(itemData);
 
   return response.body.item;
 };
 
-export const createTestRental = async (app, authToken, itemId, rentalData = {}) => {
-  const defaultRentalData = {
+export const generateAuthHeader = (token) => ({
+  Authorization: `Bearer ${token}`
+});
+
+export const createTestRental = async (app, authToken, itemId) => {
+  const rentalData = {
     itemId,
     startDate: new Date().toISOString(),
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    totalPrice: 700,
-    ...rentalData
+    totalPrice: 700
   };
 
   const response = await request(app)
     .post('/rentals')
     .set('Authorization', `Bearer ${authToken}`)
-    .send(defaultRentalData);
+    .send(rentalData);
 
   return response.body.rental;
 };
 
-export const createTestReview = async (app, authToken, itemId, reviewData = {}) => {
-  const defaultReviewData = {
+export const createTestReview = async (app, authToken, itemId) => {
+  const reviewData = {
     itemId,
     rating: 5,
     comment: 'Great item, exactly as described!',
-    title: 'Excellent Experience',
-    ...reviewData
+    title: 'Excellent Experience'
   };
 
   const response = await request(app)
     .post('/review')
     .set('Authorization', `Bearer ${authToken}`)
-    .send(defaultReviewData);
+    .send(reviewData);
 
   return response.body.review;
-};
-
-export const generateAuthHeader = (token) => ({
-  Authorization: `Bearer ${token}`
-}); 
+}; 

@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">49.12% </span>
+                <span class="strong">68.42% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>28/57</span>
+                <span class='fraction'>39/57</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">57.14% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>4/7</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">49.12% </span>
+                <span class="strong">68.42% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>28/57</span>
+                <span class='fraction'>39/57</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -130,15 +130,15 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -167,10 +167,10 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -186,15 +186,15 @@ passport.use(new LocalStrategy({
   usernameField: 'email',
   passwordField: 'password'
 }, async (email, password, done) =&gt; {
-<span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    const user = await User.findOne({ email });</span>
-<span class="cstat-no" title="statement not covered" >    if (!user) return done(null, false, { message: 'User not found' });</span>
-<span class="cstat-no" title="statement not covered" >    const isMatch = await user.comparePassword(password);</span>
-<span class="cstat-no" title="statement not covered" >    if (!isMatch) return done(null, false, { message: 'Incorrect password' });</span>
+  try {
+    const user = await User.findOne({ email });
+    if (!user) <span class="branch-0 cbranch-no" title="branch not covered" >return done(null, false, { message: 'User not found' });</span>
+    const isMatch = await user.comparePassword(password);
+<span class="cstat-no" title="statement not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >    if (!isMatch) return done(null, false, { message: 'Incorrect password' });</span></span>
 <span class="cstat-no" title="statement not covered" >    return done(null, user);</span>
-<span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
-<span class="cstat-no" title="statement not covered" >    return done(err);</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+  } catch (err) {
+    return done(err);
+  }
 }));
 &nbsp;
 // Google OAuth2
@@ -223,10 +223,10 @@ passport.use(new GoogleStrategy({
 // session persistence
 passport.serializeUser((user, done) =&gt; done(null, user.id));
 passport.deserializeUser(async (id, done) =&gt; {
-<span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    const user = await User.findById(id);</span>
-<span class="cstat-no" title="statement not covered" >    done(null, user);</span>
-<span class="cstat-no" title="statement not covered" >  } catch (err) {</span>
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } <span class="branch-0 cbranch-no" title="branch not covered" >catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >    done(err);</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 });
@@ -238,7 +238,7 @@ export default passport;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-04T18:11:22.481Z
+                at 2025-05-09T17:23:15.767Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

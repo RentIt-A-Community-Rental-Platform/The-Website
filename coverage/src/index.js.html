@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/173</span>
+                <span class='fraction'>0/180</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/173</span>
+                <span class='fraction'>0/180</span>
             </div>
         
             
@@ -235,7 +235,21 @@
 <a name='L170'></a><a href='#L170'>170</a>
 <a name='L171'></a><a href='#L171'>171</a>
 <a name='L172'></a><a href='#L172'>172</a>
-<a name='L173'></a><a href='#L173'>173</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -422,6 +436,9 @@
 <span class="cstat-no" title="statement not covered" >import geminiRoutes from './routes/geminiRoutes.js';</span>
 <span class="cstat-no" title="statement not covered" >import { mkdirSync } from 'fs';</span>
 <span class="cstat-no" title="statement not covered" >import { rentalRoutes } from './routes/rentals.js';</span>
+<span class="cstat-no" title="statement not covered" >import { reviewRoutes } from './routes/review.js';</span>
+<span class="cstat-no" title="statement not covered" >import { userRoutes } from './routes/users.js';</span>
+<span class="cstat-no" title="statement not covered" >import app from './app.js';</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >// Load environment variables</span>
 <span class="cstat-no" title="statement not covered" >dotenv.config();</span>
@@ -510,8 +527,10 @@
 <span class="cstat-no" title="statement not covered" >app.use('/auth', authRoutes);</span>
 <span class="cstat-no" title="statement not covered" >app.use('/items', itemRoutes);</span>
 <span class="cstat-no" title="statement not covered" >app.use('/rentals', rentalRoutes);</span>
+<span class="cstat-no" title="statement not covered" >app.use('/users', userRoutes); // Add this line</span>
 <span class="cstat-no" title="statement not covered" >app.use('/api', cloudinaryUpload); // /api/upload-image</span>
 <span class="cstat-no" title="statement not covered" >app.use('/api/gemini', geminiRoutes); //api for gemini</span>
+<span class="cstat-no" title="statement not covered" >app.use('/review', reviewRoutes);</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >// Protected dashboard example</span>
 <span class="cstat-no" title="statement not covered" >app.get('/dashboard', (req, res) =&gt; {</span>
@@ -558,8 +577,6 @@
 <span class="cstat-no" title="statement not covered" >  });</span>
 <span class="cstat-no" title="statement not covered" >});</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >// Register routes</span>
-<span class="cstat-no" title="statement not covered" >app.use('/rentals', rentalRoutes);</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >// Start server</span>
 <span class="cstat-no" title="statement not covered" >const PORT = process.env.PORT || 3000;</span>
@@ -579,14 +596,18 @@
 <span class="cstat-no" title="statement not covered" >  });</span>
 <span class="cstat-no" title="statement not covered" >} else {</span>
 <span class="cstat-no" title="statement not covered" >  console.log('\n&gt; Running in test mode - server not started');</span>
-<span class="cstat-no" title="statement not covered" >}</span></pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >}</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >app.listen(PORT, () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  console.log(`Server is running on port ${PORT}`);</span>
+<span class="cstat-no" title="statement not covered" >});</span></pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-04T18:11:22.481Z
+                at 2025-05-09T17:23:15.767Z
             </div>
         <script src="../prettify.js"></script>
         <script>

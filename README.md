@@ -1,87 +1,99 @@
-# University Rentals Platform Backend
+# RentIt - A Community Rental Platform
 
-A Node.js/Express.js backend for a university rental platform that allows students to rent items from each other.
+RentIt is a web application designed to facilitate peer-to-peer rentals within university communities. The platform allows students to list items they own for rent and rent items from other students, creating a sustainable sharing economy on campus.
 
 ## Features
 
-- Google OAuth2 authentication (restricted to NYU email addresses)
-- Image upload and analysis using Google's Gemini API
-- Item listing management
-- Availability period tracking
-- MongoDB database integration
+- **User Authentication**: Secure login and registration system with Google OAuth integration
+- **Item Listings**: Users can list their items with photos, descriptions, pricing, and availability
+- **Search & Filter**: Find items by category, availability dates, and keywords
+- **Rental Management**: Request items, approve/deny rental requests, and manage your listings
+- **User Profiles**: View user ratings, reviews, and listing history
+- **Real-time Notifications**: Get notified about rental requests and updates
+- **Review System**: Leave and receive reviews after completed rentals
 
-## Prerequisites
+## Pages
 
-- Node.js 18+
-- MongoDB Atlas account
-- Google Cloud Project with OAuth2 credentials
-- Gemini API key
+- **Home Page**: Browse all available items for rent
+- **Item Details**: View detailed information about a specific item
+- **List Item**: Multi-step form to create a new listing
+- **My Listings**: Manage your listed items
+- **User Listings**: View items listed by a specific user and their reviews
+- **Edit Listing**: Update information for your listed items
+- **Rental Requests**: Review and manage incoming rental requests
+- **Authentication**: Login and registration page
 
-## Setup
+## Technology Stack
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd university-rentals
-```
+- **Frontend**: HTML, CSS (Tailwind CSS), JavaScript
+- **Backend**: Node.js
+- **Database**: MongoDB (with Mongoose ODM)
+- **Authentication**: Local strategy and Google OAuth
+- **Testing**: Jest with code coverage reporting
 
-2. Install dependencies:
-```bash
-npm install
-```
+## Getting Started
 
-3. Create a `.env` file based on `.env.example`:
-```bash
-cp .env.example .env
-```
+### Prerequisites
 
-4. Update the `.env` file with your credentials:
-- Add your MongoDB connection string
-- Add your Google OAuth2 credentials
-- Add your Gemini API key
-- Add a JWT secret for authentication
+- Node.js and npm installed
+- MongoDB instance (local or cloud)
 
-5. Create the uploads directory:
-```bash
-mkdir -p src/uploads
-```
+### Installation
 
-## Running the Application
+1. Clone the repository
+   ```
+   git clone https://github.com/yourusername/rentit.git
+   cd rentit
+   ```
 
-Start the development server:
-```bash
-npm run dev
-```
+2. Install dependencies
+   ```
+   npm install
+   ```
 
-The API will be available at `http://localhost:3000`
+3. Create a `.env` file in the root directory with the following variables:
+   ```
+   PORT=3000
+   MONGODB_URI=mongodb://localhost:27017/rentit
+   SESSION_SECRET=your_session_secret
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
 
-## API Endpoints
+4. Start the development server
+   ```
+   npm run dev
+   ```
 
-### Authentication
-- `POST /auth/login/google`: Google OAuth2 login
-- `GET /auth/me`: Get current user profile
+5. Open your browser and navigate to `http://localhost:3000`
 
-### Items
-- `POST /items/upload-image`: Upload image and get Gemini suggestions
-- `POST /items`: Create a new item listing
-- `GET /items`: List all items
+## Project Structure
 
-## Security
+- **/public**: Static assets and frontend files
+  - HTML pages
+  - CSS styles
+  - Client-side JavaScript
+  - Images
+- **/src**: Server-side code
+  - **/models**: Database models (User, Rental, etc.)
+  - **/routes**: API endpoints
+  - **/middleware**: Custom middleware functions
+  - **/config**: Configuration files
 
-- All endpoints except `/auth/login/google` require authentication
-- Only NYU email addresses are allowed to register
-- File uploads are restricted to JPEG and PNG images under 10MB
-- All sensitive data is stored in environment variables
+## Contributing
 
-## Development
-
-The application uses:
-- Express.js for the web framework
-- MongoDB with Mongoose for the database
-- JWT for authentication
-- Multer for file uploads
-- Google Generative AI for image analysis
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-MIT 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Tailwind CSS for the UI framework
+- Font Awesome for icons
+- All contributors who have helped shape this project

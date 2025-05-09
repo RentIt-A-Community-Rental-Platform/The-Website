@@ -1,130 +1,72 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
-import supertest from 'supertest';
-import express from 'express';
-import { v2 as cloudinary } from 'cloudinary';
-import { Readable } from 'stream';
-import multer from 'multer';
+import request from 'supertest';
+import { testApp } from '../setup.js';
+import { User } from '../../src/models/User.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import cloudinaryRoutes from '../../src/routes/cloudinaryUpload.js';
 
-describe.skip('Cloudinary Upload Routes', function() {
-  this.timeout(10000);
-  let app, request, cloudinaryStub;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  before(async function() {
-    // Create a test express app
-    app = express();
+// Mount cloudinary routes on test app
+testApp.use('/api', cloudinaryRoutes);
 
-    // Set up stub for cloudinary upload_stream
-    const uploadStreamStub = sinon.stub();
-    cloudinaryStub = {
-      config: sinon.stub(),
-      uploader: {
-        upload_stream: uploadStreamStub
-      }
-    };
+describe('Cloudinary Upload Routes', () => {
+  let token;
 
-    // Mock multer
-    const multerStub = () => ({
-      single: () => (req, res, next) => {
-        // Add a mock file to the request
-        req.file = {
-          originalname: 'test-image.jpg',
-          mimetype: 'image/jpeg',
-          buffer: Buffer.from('fake image data')
-        };
-        next();
-      }
-    });
+  before(async () => {
+    // Create a test user and get token
+    const res = await request(testApp)
+      .post('/auth/register')
+      .send({
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'Test User'
+      });
 
-    // Mock streamifier
-    const streamifierStub = {
-      createReadStream: (buffer) => {
-        const stream = new Readable();
-        stream.push(buffer);
-        stream.push(null);
-        return stream;
-      }
-    };
-
-    // Create a clean version of the router
-    const mockRouter = express.Router();
-
-    // Mock dependencies
-    mockRouter.post('/upload-image', (req, res) => {
-      try {
-        if (!req.file) {
-          return res.status(400).json({ error: 'No file uploaded' });
-        }
-
-        const uploadPromise = new Promise((resolve, reject) => {
-          // Simulate successful upload
-          resolve({
-            secure_url: 'https://res.cloudinary.com/demo/image/upload/test-image.jpg'
-          });
-        });
-
-        uploadPromise.then(result => {
-          res.json({ secure_url: result.secure_url });
-        }).catch(err => {
-          res.status(500).json({ error: 'Failed to upload image', details: err.message });
-        });
-      } catch (err) {
-        res.status(500).json({ error: 'Failed to upload image', details: err.message });
-      }
-    });
-
-    // Add a test route to simulate upload failure
-    mockRouter.post('/upload-image-fail', (req, res) => {
-      res.status(500).json({ error: 'Failed to upload image', details: 'Simulated failure' });
-    });
-
-    // Add a test route to simulate missing file
-    mockRouter.post('/upload-no-file', (req, res) => {
-      // Remove the file from the request
-      req.file = null;
-      
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-      
-      res.status(200).json({ secure_url: 'should-not-reach-here' });
-    });
-
-    app.use('/api', mockRouter);
-    request = supertest(app);
-  });
-
-  afterEach(() => {
-    sinon.restore();
+    token = res.body.token;
   });
 
   describe('POST /api/upload-image', () => {
-    it('should successfully upload an image', async () => {
-      const response = await request
+    it('should upload image successfully', async () => {
+      const res = await request(testApp)
         .post('/api/upload-image')
-        .attach('image', Buffer.from('fake image data'), 'test-image.jpg');
+        .set('Authorization', `Bearer ${token}`)
+        .attach('image', path.join(__dirname, '../fixtures/test-image.jpg'));
 
-      expect(response.status).to.equal(200);
-      expect(response.body).to.have.property('secure_url');
-      expect(response.body.secure_url).to.be.a('string');
-      expect(response.body.secure_url).to.include('cloudinary.com');
+      expect(res.status).to.equal(200);
+      expect(res.body).to.have.property('url');
+      expect(res.body.url).to.be.a('string');
     });
 
-    it('should handle upload failures', async () => {
-      const response = await request
-        .post('/api/upload-image-fail')
-        .attach('image', Buffer.from('fake image data'), 'test-image.jpg');
+    it('should fail with invalid file type', async () => {
+      const res = await request(testApp)
+        .post('/api/upload-image')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('image', path.join(__dirname, '../fixtures/test.txt'));
 
-      expect(response.status).to.equal(500);
-      expect(response.body).to.have.property('error', 'Failed to upload image');
+      expect(res.status).to.equal(400);
+      expect(res.body).to.have.property('error');
     });
 
-    it('should handle missing file', async () => {
-      const response = await request
-        .post('/api/upload-no-file');
+    it('should fail without authentication', async () => {
+      const res = await request(testApp)
+        .post('/api/upload-image')
+        .attach('image', path.join(__dirname, '../fixtures/test-image.jpg'));
 
-      expect(response.status).to.equal(400);
-      expect(response.body).to.have.property('error', 'No file uploaded');
+      expect(res.status).to.equal(401);
+      expect(res.body).to.have.property('error');
+    });
+
+    it('should handle cloudinary upload error', async () => {
+      const res = await request(testApp)
+        .post('/api/upload-image')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('image', path.join(__dirname, '../fixtures/invalid-image.jpg'));
+
+      expect(res.status).to.equal(500);
+      expect(res.body).to.have.property('error');
     });
   });
-});
+}); 

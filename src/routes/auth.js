@@ -11,6 +11,28 @@ router.post('/register', async (req, res) => {
     try {
         const { email, password, name } = req.body;
         
+        // Validate required fields
+        if (!email || !password || !name) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Validate password length
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+        
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+        
         // Create user with hashed password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -31,7 +53,8 @@ router.post('/register', async (req, res) => {
         );
         
         res.status(201).json({ 
-            user: {  _id: user._id, email, name },
+            message: 'User registered successfully',
+            user: { _id: user._id, email, name },
             token
         });
     } catch (error) {
@@ -44,6 +67,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        
+        // Validate required fields
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
         
         // Find user by email
         const user = await User.findOne({ email });
@@ -58,22 +86,15 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Generate JWT token with consistent field names
+        // Generate JWT token
         const token = jwt.sign(
-            { _id: user._id, email: user.email },  // Use _id instead of id
+            { id: user._id, email: user.email },
             process.env.JWT_SECRET || 'your-jwt-secret-key',
             { expiresIn: '7d' }
         );
         
-        // Store user in session for traditional auth
-        req.login(user, (err) => {
-            if (err) {
-                console.error('Session login error:', err);
-            }
-        });
-        
-        res.json({ 
-            user: {  _id: user._id, email: user.email, name: user.name },
+        res.status(200).json({ 
+            user: { _id: user._id, email: user.email, name: user.name },
             token
         });
     } catch (error) {
@@ -83,11 +104,27 @@ router.post('/login', async (req, res) => {
 });
 
 // Get current user
-router.get('/me', (req, res) => {
-    if (req.isAuthenticated()) {
-        return res.json({ user: req.user });
+router.get('/me', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
+        
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        res.status(200).json({ 
+            user: { _id: user._id, email: user.email, name: user.name }
+        });
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
     }
-    res.status(401).json({ error: 'Not authenticated' });
 });
 
 // Google OAuth flow
@@ -97,130 +134,125 @@ router.get(
     '/google/callback',
     passport.authenticate('google', { failureRedirect: '/auth.html' }),
     (req, res) => {
-      res.redirect('/');
+        res.redirect('/dashboard');
     }
 );
 
-// Logout
-router.post('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            console.error('> Logout error:', err);
-            return res.status(500).json({ error: 'Failed to logout' });
-        }
-        req.session.destroy(() => {
-            res.clearCookie('connect.sid');
-            res.status(200).json({ message: 'Logged out successfully' });
-        });
-    });
-});
-
-// Update username
-router.patch('/update-username', async (req, res) => {
+// Update profile
+router.put('/profile', async (req, res) => {
     try {
-        const userId = req.user?._id;
-        const { newName, currentPassword } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
         }
 
-        const user = await User.findById(userId);
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
+        
+        const user = await User.findById(decoded.id);
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(401).json({ error: 'User not found' });
         }
 
-        // Verify current password
-        const isPasswordValid = await user.comparePassword(currentPassword);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Current password is incorrect' });
+        const { email, name } = req.body;
+
+        // Validate email format if provided
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ error: 'Invalid email format' });
+            }
+
+            // Check if email is already taken
+            const existingUser = await User.findOne({ email });
+            if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+                return res.status(400).json({ error: 'Email already exists' });
+            }
+            user.email = email;
         }
 
-        // Check if name is already taken
-        const existingUser = await User.findOne({ name: newName });
-        if (existingUser && existingUser._id.toString() !== userId.toString()) {
-            return res.status(400).json({ error: 'Name is already taken' });
+        if (name) {
+            user.name = name;
         }
 
-        // Update name
-        user.name = newName;
         await user.save();
 
-        res.status(200).json({ message: 'Name updated successfully' });
+        res.status(200).json({ 
+            message: 'Profile updated successfully',
+            user: { _id: user._id, email: user.email, name: user.name }
+        });
     } catch (error) {
-        console.error('> Error updating name:', error);
-        res.status(500).json({ error: 'Failed to update name' });
+        console.error('Profile update error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
 // Update password
-router.patch('/update-password', async (req, res) => {
+router.put('/password', async (req, res) => {
     try {
-        const userId = req.user?._id;
-        const { currentPassword, newPassword } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
         }
 
-        const user = await User.findById(userId);
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
+        
+        const user = await User.findById(decoded.id);
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current password and new password are required' });
         }
 
         // Verify current password
-        const isPasswordValid = await user.comparePassword(currentPassword);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: 'Current password is incorrect' });
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+
+        // Validate new password length
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters' });
         }
 
         // Update password
-        user.password = newPassword;
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
         await user.save();
 
         res.status(200).json({ message: 'Password updated successfully' });
     } catch (error) {
-        console.error('> Error updating password:', error);
+        console.error('Password update error:', error);
         res.status(500).json({ error: 'Failed to update password' });
     }
 });
 
 // Middleware to check if user is authenticated
 export const isAuthenticated = async (req, res, next) => {
-    // First check session-based auth
-    if (req.isAuthenticated()) {
-        return next();
-    }
-
-    // Then check JWT token
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
-        try {
-            console.log('> Verifying JWT token...');
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
-            console.log('> Decoded token:', decoded);
-            
-            if (decoded) {
-                // Handle both id and _id cases
-                const userId = decoded.id || decoded._id;
-                if (userId) {
-                    console.log('> Looking up user with ID:', userId);
-                    const user = await User.findById(userId);
-                    if (user) {
-                        console.log('> User found:', user.email);
-                        req.user = user;
-                        return next();
-                    }
-                    console.log('> User not found in database');
-                }
-            }
-        } catch (error) {
-            console.error('> Token verification error:', error);
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No token provided' });
         }
-    }
 
-    res.status(401).json({ error: 'Not authenticated' });
+        const token = authHeader.substring(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret-key');
+        
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
+    }
 };
 
 // Middleware to check if user is already logged in
@@ -306,4 +338,4 @@ router.get('/status', (req, res) => {
     res.json({ isAuthenticated: false });
 });
 
-export const authRoutes = router; 
+export default router; 

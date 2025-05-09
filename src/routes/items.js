@@ -146,4 +146,4 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-export const itemRoutes = router;
+export default router;

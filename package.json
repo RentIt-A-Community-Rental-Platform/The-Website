@@ -41,12 +41,12 @@
   },
   "c8": {
     "include": [
-      "src/utils/gemini.js"
+      "src/**/*.js"
     ],
     "exclude": [
-      "test/**",
-      "src/scripts/**",
-      "coverage/**"
+      "src/routes/rentals.js",
+      "src/routes/auth.js",
+      "src/index.js"
     ],
     "all": true,
     "reporter": [

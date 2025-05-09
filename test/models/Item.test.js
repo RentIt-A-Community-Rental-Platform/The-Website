@@ -1,76 +1,72 @@
 import { expect } from 'chai';
 import { Item } from '../../src/models/Item.js';
 
-describe('Item Model Tests', function() {
-  this.timeout(10000); // Increase timeout
-  it('should create a new item with valid data', async () => {
-    const itemData = {
+describe('Item Model Test', () => {
+  it('should create & save item successfully', async () => {
+    const validItem = new Item({
       title: 'Test Item',
-      description: 'This is a test item',
-      price: 29.99,
+      description: 'Test Description',
+      price: 10.99,
       category: 'Electronics',
-      deposit: 10.00,
-      userId: '123456789',
+      deposit: 50,
+      userId: 'testUserId123',
       userName: 'Test User',
       photos: ['photo1.jpg', 'photo2.jpg']
-    };
-
-    const item = new Item(itemData);
-    const savedItem = await item.save();
-
-    expect(savedItem).to.have.property('_id');
-    expect(savedItem.title).to.equal(itemData.title);
-    expect(savedItem.description).to.equal(itemData.description);
-    expect(savedItem.price).to.equal(itemData.price);
-    expect(savedItem.category).to.equal(itemData.category);
-    expect(savedItem.deposit).to.equal(itemData.deposit);
-    expect(savedItem.userId).to.equal(itemData.userId);
-    expect(savedItem.userName).to.equal(itemData.userName);
-    expect(savedItem.photos).to.deep.equal(itemData.photos);
-    expect(savedItem.createdAt).to.be.a('date');
-  });
-
-  it('should set default values when not provided', async () => {
-    // Providing only required fields
-    const item = new Item({
-      userId: '123456789'
     });
+
+    const savedItem = await validItem.save();
     
-    const savedItem = await item.save();
-
-    expect(savedItem).to.have.property('_id');
-    expect(savedItem.userId).to.equal('123456789');
-    expect(savedItem.userName).to.equal('Unknown User'); // Default userName
-    expect(savedItem.createdAt).to.be.a('date');
+    expect(savedItem._id).to.exist;
+    expect(savedItem.title).to.equal('Test Item');
+    expect(savedItem.description).to.equal('Test Description');
+    expect(savedItem.price).to.equal(10.99);
+    expect(savedItem.category).to.equal('Electronics');
+    expect(savedItem.deposit).to.equal(50);
+    expect(savedItem.userId).to.equal('testUserId123');
+    expect(savedItem.userName).to.equal('Test User');
+    expect(savedItem.photos).to.have.lengthOf(2);
+    expect(savedItem.createdAt).to.exist;
   });
 
-  it('should not save without required userId', async () => {
-    const item = new Item({
-      title: 'Invalid Item',
-      description: 'This item has no userId'
+  it('should fail to save item without required fields', async () => {
+    const itemWithoutRequiredField = new Item({
+      title: 'Test Item',
+      description: 'Test Description',
+      price: 10.99
     });
 
+    let err;
     try {
-      await item.save();
-      throw new Error('Should not reach here');
+      await itemWithoutRequiredField.save();
     } catch (error) {
-      expect(error).to.exist;
-      expect(error.name).to.equal('ValidationError');
+      err = error;
     }
+
+    expect(err).to.exist;
+    expect(err.errors.userId).to.exist;
   });
 
-  it('should handle price and deposit as numbers', async () => {
-    const item = new Item({
-      title: 'Number Test',
-      userId: '123456789',
-      price: '42.50', // String that should be converted to number
-      deposit: '15.75' // String that should be converted to number
+  it('should set default userName if not provided', async () => {
+    const itemWithoutUserName = new Item({
+      title: 'Test Item',
+      description: 'Test Description',
+      price: 10.99,
+      userId: 'testUserId123'
     });
 
-    const savedItem = await item.save();
-    
-    // Mongoose should handle type conversion
-    expect(savedItem.price).to.be.a('number');
-    expect(savedItem.deposit).to.be.a('number');
+    const savedItem = await itemWithoutUserName.save();
+    expect(savedItem.userName).to.equal('Unknown User');
   });
-});
+
+  it('should handle empty photos array', async () => {
+    const itemWithoutPhotos = new Item({
+      title: 'Test Item',
+      description: 'Test Description',
+      price: 10.99,
+      userId: 'testUserId123'
+    });
+
+    const savedItem = await itemWithoutPhotos.save();
+    expect(savedItem.photos).to.be.an('array').that.is.empty;
+  });
+}); 

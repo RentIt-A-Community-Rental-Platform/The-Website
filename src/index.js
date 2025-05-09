@@ -7,12 +7,12 @@ import passport from './config/passport.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import multer from 'multer';
-import { itemRoutes } from './routes/items.js';
-import { authRoutes } from './routes/auth.js';
-import cloudinaryUpload from './routes/cloudinaryUpload.js';
+import itemRoutes from './routes/itemRoutes.js';
+import authRoutes from './routes/auth.js';
+import cloudinaryRoutes from './routes/cloudinaryUpload.js';
 import geminiRoutes from './routes/geminiRoutes.js';
 import { mkdirSync } from 'fs';
-import { rentalRoutes } from './routes/rentals.js';
+import rentalRoutes from './routes/rentalRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -65,26 +65,19 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Connect to MongoDB (use TEST URI when running tests)
-const mongoURI = process.env.NODE_ENV === 'test'
-  ? process.env.MONGODB_TEST_URI
-  : (process.env.MONGODB_URI || 'mongodb://localhost/rentit');
-
-if (process.env.NODE_ENV === 'test' && !process.env.MONGODB_TEST_URI) {
-  console.error('✖  MONGODB_TEST_URI must be set when NODE_ENV=test');
-  process.exit(1);
-}
-
+// Connect to MongoDB (skip in test environment since it's handled by test/setup.js)
+if (process.env.NODE_ENV !== 'test') {
+  const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost/rentit';
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => console.log(`> Connected to MongoDB (${process.env.NODE_ENV})`))
+    .then(() => console.log('> Connected to MongoDB'))
   .catch(err => {
     console.error('> MongoDB connection error:', err);
     process.exit(1);
   });
-
+}
 
 // Initialize Gemini
 // setupGemini();
@@ -98,11 +91,11 @@ try {
 }
 
 // Mount routes
-app.use('/auth', authRoutes);
-app.use('/items', itemRoutes);
-app.use('/rentals', rentalRoutes);
-app.use('/api', cloudinaryUpload); // /api/upload-image
-app.use('/api/gemini', geminiRoutes); //api for gemini
+app.use('/api/auth', authRoutes);
+app.use('/api/upload', cloudinaryRoutes);
+app.use('/api/gemini', geminiRoutes);
+app.use('/api/items', itemRoutes);
+app.use('/api/rentals', rentalRoutes);
 
 // Protected dashboard example
 app.get('/dashboard', (req, res) => {
@@ -131,22 +124,27 @@ app.get('/google/callback',
 // Fallback to login page for root URL
 app.get('/dashboard', (req, res) => res.redirect('/auth.html'));
 
-// 404 handler
-app.use((req, res, next) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: 'The requested resource does not exist'
-  });
+// Error test route
+app.get('/api/error-test', (req, res, next) => {
+    next(new Error('Test error'));
 });
 
-// Global error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('> Error:', err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: err.message,
-    timestamp: new Date().toISOString()
-  });
+    console.error(err.stack);
+    res.status(500).json({
+        error: 'Something went wrong!',
+        message: err.message,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Not Found',
+        message: 'The requested resource does not exist'
+    });
 });
 
 // Register routes
@@ -171,3 +169,5 @@ if (process.env.NODE_ENV !== 'test' && process.env.TEST_MODE !== 'true') {
 } else {
   console.log('\n> Running in test mode - server not started');
 }
+
+export default app;

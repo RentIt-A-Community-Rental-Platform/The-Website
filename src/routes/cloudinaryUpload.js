@@ -4,6 +4,7 @@ import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { config } from 'dotenv';
 import streamifier from 'streamifier';
+import { isAuthenticated } from './auth.js';
 
 config(); // Load .env
 
@@ -17,38 +18,48 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-router.post('/upload-image', upload.single('image'), async (req, res) => {
+router.post('/upload-image', isAuthenticated, upload.single('image'), async (req, res) => {
     try {
-      if (!req.file) {
-        console.log('> No file received');
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-  
-      console.log('> File received:', req.file.originalname, req.file.mimetype);
-  
-      const streamUpload = (fileBuffer) => {
-        return new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            {
-              folder: 'rentit/uploads'
-            },
-            (error, result) => {
-              if (result) resolve(result);
-              else reject(error);
-            }
-          );
-          streamifier.createReadStream(fileBuffer).pipe(stream);
-        });
-      };
-  
-      const result = await streamUpload(req.file.buffer);
-      console.log('> Uploaded to Cloudinary:', result.secure_url);
-      res.json({ secure_url: result.secure_url });
-  
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({ error: 'Invalid file type. Only images are allowed.' });
+        }
+
+        const streamUpload = (fileBuffer) => {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'rentit/uploads'
+                    },
+                    (error, result) => {
+                        if (error) {
+                            console.error('Upload failed:', error);
+                            reject(new Error('Invalid image file'));
+                        } else {
+                            resolve(result);
+                        }
+                    }
+                );
+                streamifier.createReadStream(fileBuffer).pipe(stream);
+            });
+        };
+
+        const result = await streamUpload(req.file.buffer);
+        res.json({ url: result.secure_url });
+
     } catch (err) {
-      console.error('> Upload failed:', err);
-      res.status(500).json({ error: 'Failed to upload image', details: err.message });
+        console.error('Upload failed:', err);
+        if (err.message === 'Invalid image file') {
+            res.status(400).json({ error: err.message });
+        } else {
+            res.status(500).json({ error: 'Failed to upload image' });
+        }
     }
-  });
+});
 
 export default router;

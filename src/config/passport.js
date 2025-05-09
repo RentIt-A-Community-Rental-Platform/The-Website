@@ -44,13 +44,25 @@ passport.use(new GoogleStrategy({
 ));
 
 // session persistence
-passport.serializeUser((user, done) => done(null, user.id));
+passport.serializeUser((user, done) => {
+  if (!user || !user.id) {
+    return done(new Error('Invalid user object'));
+  }
+  done(null, user.id);
+});
+
 passport.deserializeUser(async (id, done) => {
   try {
+    if (!id) {
+      return done(new Error('Invalid user ID'));
+    }
     const user = await User.findById(id);
+    if (!user) {
+      return done(new Error('User not found'));
+    }
     done(null, user);
-  } catch (err) {
-    done(err);
+  } catch (error) {
+    done(error);
   }
 });
 

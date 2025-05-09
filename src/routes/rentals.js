@@ -202,17 +202,17 @@ router.put('/:id', isAuthenticated, async (req, res) => {
         if (req.body.meetingDetails) {
             rental.meetingDetails = req.body.meetingDetails;
         }
+
+        // Set status to modified
         rental.status = 'modified';
-        
-        // Track who last modified the request
-        rental.lastModifiedBy = req.user._id;
 
         await rental.save();
-        res.json({ message: 'Rental request modified successfully', rental });
+
+        res.json({ message: 'Rental request updated', rental });
     } catch (error) {
-        console.error('Error modifying rental request:', error);
-        res.status(500).json({ error: 'Failed to modify rental request' });
+        console.error('Error updating rental request:', error);
+        res.status(500).json({ error: 'Failed to update rental request' });
     }
 });
 
-export const rentalRoutes = router;
+export default router;

@@ -16,9 +16,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  * @throws {Error} Throws an error if analysis fails
  */
 export async function analyzeImageFromBase64(base64Image) {
+  if (!base64Image) {
+    throw new Error('No image data provided');
+  }
+
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    // const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
 
     const result = await model.generateContent([
       "THIS IS VERY IMPORTANT TO REMEMBER WHILE GENERATING THE RESPONSE FOR YOU: ALWAYS ANSWER IN THE FOLLOWING FORMAT: {title:'the title of the item',description:'a decription of the item',suggestedPrice:'a suggested daily rate price for the item to be rented out. Don't make it too expensive. should be a number only, don't use any currency symbols',category:'category of the item between Kitchen,Tools,Music,Books,Party & Events, Sports, Photography,Electronics,Other [PICK ONLY ONE FROM THESE]'}",
@@ -39,6 +42,10 @@ export async function analyzeImageFromBase64(base64Image) {
     const response = await result.response;
     const text = response.text();
     console.log("GEMINI TEXT: ", text);
+
+    if (!text) {
+      throw new Error('No response from Gemini API');
+    }
 
     // Try to extract JSON from the response using a regex pattern
     const match = text.match(/```json\s*([\s\S]*?)\s*```/);
@@ -61,13 +68,27 @@ export async function analyzeImageFromBase64(base64Image) {
       throw new Error('No JSON data found in response');
     }
 
-    // Extract fields from the data object
-    const {title, description, suggestedPrice, category} = data;
+    // Validate required fields
+    const { title, description, suggestedPrice, category } = data;
+    if (!title || !description || !suggestedPrice || !category) {
+      throw new Error('Missing required fields in response');
+    }
+
+    // Validate price is a number
+    if (typeof suggestedPrice !== 'number') {
+      throw new Error('Invalid price format');
+    }
+
+    // Validate category is one of the allowed values
+    const allowedCategories = ['Kitchen', 'Tools', 'Music', 'Books', 'Party & Events', 'Sports', 'Photography', 'Electronics', 'Other'];
+    if (!allowedCategories.includes(category)) {
+      throw new Error('Invalid category');
+    }
 
     // Return the structured data
     return { title, description, suggestedPrice, category };
   } catch (error) {
     console.error('Gemini API error:', error);
-    throw new Error('Failed to analyze image');
+    throw error;
   }
 }

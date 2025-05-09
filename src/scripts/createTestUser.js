@@ -10,7 +10,7 @@ const TEST_USER = {
     name: 'Test User'
 };
 
-async function createTestUser() {
+export async function createTestUser() {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB');
@@ -19,19 +19,29 @@ async function createTestUser() {
         const existingUser = await User.findOne({ email: TEST_USER.email });
         if (existingUser) {
             console.log('Test user already exists');
-            process.exit(0);
+            return existingUser;
         }
 
         // Create test user
         const user = new User(TEST_USER);
         await user.save();
         console.log('Test user created successfully');
+        return user;
         
     } catch (error) {
         console.error('Error:', error);
+        throw error;
     } finally {
         await mongoose.disconnect();
     }
 }
 
-createTestUser(); 
+// Only run if this file is executed directly
+if (process.argv[1] === import.meta.url) {
+    createTestUser()
+        .then(() => process.exit(0))
+        .catch(error => {
+            console.error('Error:', error);
+            process.exit(1);
+        });
+} 

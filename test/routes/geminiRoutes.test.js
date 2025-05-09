@@ -1,99 +1,158 @@
 import { expect } from 'chai';
+import request from 'supertest';
+import { testApp } from '../setup.js';
+import { User } from '../../src/models/User.js';
 import sinon from 'sinon';
-import supertest from 'supertest';
-import express from 'express';
 import * as geminiUtils from '../../src/utils/gemini.js';
+import geminiRoutes from '../../src/routes/geminiRoutes.js';
 
-describe.skip('Gemini Routes Tests', function() {
-  this.timeout(10000);
-  let app, request, analyzeStub;
+// Mount Gemini routes on test app
+testApp.use('/api/gemini', geminiRoutes);
 
-  before(async function() {
-    // Create test express app
-    app = express();
-    app.use(express.json({ limit: '10mb' }));
-    
-    // Create a stub for the analyzeImageFromBase64 function
-    analyzeStub = sinon.stub(geminiUtils, 'analyzeImageFromBase64');
-    
-    // Create a router similar to geminiRoutes.js but using our stub
-    const router = express.Router();
-    
-    router.post('/analyze', async (req, res) => {
-      try {
-        const { base64Image } = req.body;
-    
-        if (!base64Image) {
-          return res.status(400).json({ error: 'Missing base64 image' });
-        }
-    
-        const result = await analyzeStub(base64Image);
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to analyze image' });
-      }
+describe('Gemini Routes', () => {
+  let token;
+  let geminiStub;
+
+  before(async () => {
+    // Create test user and get token
+    const user = await User.create({
+      email: 'test@test.com',
+      password: 'password123',
+      name: 'Test User'
     });
-    
-    app.use('/api/gemini', router);
-    request = supertest(app);
-  });
 
-  afterEach(() => {
-    // Reset the stub after each test
-    analyzeStub.reset();
+    const login = await request(testApp)
+      .post('/auth/login')
+      .send({
+        email: 'test@test.com',
+        password: 'password123'
+      });
+    token = login.body.token;
+
+    // Stub the Gemini API
+    geminiStub = sinon.stub(geminiUtils, 'analyzeImageFromBase64');
   });
 
   after(() => {
-    // Restore the original function
-    analyzeStub.restore();
+    geminiStub.restore();
+  });
+
+  beforeEach(() => {
+    geminiStub.reset();
   });
 
   describe('POST /api/gemini/analyze', () => {
-    it('should analyze image and return results', async () => {
-      // Setup the stub to return a successful result
-      const mockResult = {
-        title: 'Professional DSLR Camera',
-        description: 'High-quality Canon DSLR camera with 24MP sensor.',
-        suggestedPrice: 25,
-        category: 'Photography'
+    it('should analyze image successfully', async () => {
+      const mockAnalysis = {
+        title: 'Test Item',
+        description: 'A test item',
+        suggestedPrice: 50,
+        category: 'Electronics'
       };
-      
-      analyzeStub.resolves(mockResult);
-      
-      const response = await request
+
+      geminiStub.resolves(mockAnalysis);
+
+      const res = await request(testApp)
         .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
         .send({
-          base64Image: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD...'
+          imageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
         });
-      
-      expect(response.status).to.equal(200);
-      expect(response.body).to.deep.equal(mockResult);
-      expect(analyzeStub.calledOnce).to.be.true;
+
+      expect(res.status).to.equal(200);
+      expect(res.body).to.have.property('title');
     });
 
-    it('should handle missing base64 image', async () => {
-      const response = await request
+    it('should handle missing image data', async () => {
+      const res = await request(testApp)
         .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
         .send({});
-      
-      expect(response.status).to.equal(400);
-      expect(response.body).to.have.property('error', 'Missing base64 image');
-      expect(analyzeStub.called).to.be.false;
+
+      expect(res.status).to.equal(400);
     });
 
-    it('should handle gemini API errors', async () => {
-      // Setup the stub to throw an error
-      analyzeStub.rejects(new Error('API error'));
-      
-      const response = await request
+    it('should handle invalid base64 data', async () => {
+      const res = await request(testApp)
         .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
         .send({
-          base64Image: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD...'
+          imageData: 'invalid-base64-data'
         });
-      
-      expect(response.status).to.equal(500);
-      expect(response.body).to.have.property('error', 'Failed to analyze image');
-      expect(analyzeStub.calledOnce).to.be.true;
+
+      expect(res.status).to.equal(400);
+    });
+
+    it('should handle analysis failure', async () => {
+      geminiStub.rejects(new Error('Analysis failed'));
+
+      const res = await request(testApp)
+        .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          imageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+        });
+
+      expect(res.status).to.equal(500);
+    });
+
+    it('should handle large image data', async () => {
+      const largeImageData = 'data:image/jpeg;base64,' + 'a'.repeat(5 * 1024 * 1024); // 5MB
+
+      const res = await request(testApp)
+        .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          imageData: largeImageData
+        });
+
+      expect(res.status).to.equal(400);
+    });
+
+    it('should handle different image formats', async () => {
+      const mockAnalysis = {
+        title: 'Test Item',
+        description: 'A test item',
+        suggestedPrice: 50,
+        category: 'Electronics'
+      };
+
+      geminiStub.resolves(mockAnalysis);
+
+      const formats = ['jpeg', 'png', 'gif', 'webp'];
+      for (const format of formats) {
+        const res = await request(testApp)
+          .post('/api/gemini/analyze')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+            imageData: `data:image/${format};base64,/9j/4AAQSkZJRg==`
+          });
+
+        expect(res.status).to.equal(200);
+      }
+    });
+
+    it('should handle timeout scenarios', async () => {
+      geminiStub.returns(new Promise(resolve => setTimeout(resolve, 10000)));
+
+      const res = await request(testApp)
+        .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          imageData: 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+        });
+
+      expect(res.status).to.equal(500);
+    });
+
+    it('should handle malformed JSON', async () => {
+      const res = await request(testApp)
+        .post('/api/gemini/analyze')
+        .set('Authorization', `Bearer ${token}`)
+        .send('invalid json')
+        .set('Content-Type', 'application/json');
+
+      expect(res.status).to.equal(400);
     });
   });
-});
+}); 

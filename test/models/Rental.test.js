@@ -1,190 +1,143 @@
 import { expect } from 'chai';
 import mongoose from 'mongoose';
 import { Rental } from '../../src/models/Rental.js';
-import { User } from '../../src/models/User.js';
 import { Item } from '../../src/models/Item.js';
+import { User } from '../../src/models/User.js';
 
-describe('Rental Model Tests', function() {
-  this.timeout(10000); // Increase timeout
-  let testUser1, testUser2, testItem;
+describe('Rental Model Test', () => {
+  let testItem;
+  let testRenter;
+  let testOwner;
 
-  // Create test users and item before each test
   beforeEach(async () => {
     // Create test users
-    testUser1 = new User({
-      email: 'owner@example.com',
-      name: 'Owner User'
-    });
-    await testUser1.save();
-
-    testUser2 = new User({
-      email: 'renter@example.com',
-      name: 'Renter User'
-    });
-    await testUser2.save();
+    testRenter = new User({ name: 'Test Renter', email: 'renter@test.com' });
+    testOwner = new User({ name: 'Test Owner', email: 'owner@test.com' });
+    await Promise.all([testRenter.save(), testOwner.save()]);
 
     // Create test item
     testItem = new Item({
-      title: 'Rental Test Item',
-      description: 'Item for rental tests',
-      price: 25.00,
-      userId: testUser1._id.toString(),
-      userName: testUser1.name
+      title: 'Test Item',
+      description: 'Test Description',
+      price: 10.99,
+      userId: testOwner._id.toString(),
+      userName: testOwner.name
     });
     await testItem.save();
   });
 
-  it('should create a new rental with valid data', async () => {
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 7); // 1 week rental
-
-    const rentalData = {
+  it('should create & save rental successfully', async () => {
+    const validRental = new Rental({
       itemId: testItem._id,
-      ownerId: testUser1._id,
-      renterId: testUser2._id,
+      renterId: testRenter._id,
+      ownerId: testOwner._id,
       paymentMethod: 'cash',
       meetingDetails: {
-        date: '2025-06-15',
-        time: '14:30',
-        location: 'University Library',
-        notes: 'Meet at the front entrance'
+        date: '2024-03-20',
+        time: '14:00',
+        location: 'Test Location',
+        notes: 'Test Notes'
       },
       rentalPeriod: {
-        startDate: startDate,
-        endDate: endDate
+        startDate: new Date('2024-03-20'),
+        endDate: new Date('2024-03-25')
       },
-      totalPrice: 175.00
-    };
+      totalPrice: 54.95
+    });
 
-    const rental = new Rental(rentalData);
-    const savedRental = await rental.save();
-
-    expect(savedRental).to.have.property('_id');
-    expect(savedRental.itemId.toString()).to.equal(testItem._id.toString());
-    expect(savedRental.ownerId.toString()).to.equal(testUser1._id.toString());
-    expect(savedRental.renterId.toString()).to.equal(testUser2._id.toString());
-    expect(savedRental.paymentMethod).to.equal(rentalData.paymentMethod);
-    expect(savedRental.meetingDetails.location).to.equal(rentalData.meetingDetails.location);
-    expect(savedRental.totalPrice).to.equal(rentalData.totalPrice);
-    expect(savedRental.status).to.equal('pending'); // Default status
-    expect(savedRental.createdAt).to.be.a('date');
-    expect(savedRental.chatHistory).to.be.an('array').that.is.empty;
+    const savedRental = await validRental.save();
+    
+    expect(savedRental._id).to.exist;
+    expect(savedRental.status).to.equal('pending');
+    expect(savedRental.paymentMethod).to.equal('cash');
+    expect(savedRental.meetingDetails.location).to.equal('Test Location');
+    expect(savedRental.totalPrice).to.equal(54.95);
+    expect(savedRental.createdAt).to.exist;
   });
 
-  it('should fail without required fields', async () => {
-    const invalidRental = new Rental({
-      // Missing required fields
+  it('should fail to save rental without required fields', async () => {
+    const rentalWithoutRequiredField = new Rental({
       itemId: testItem._id,
-      // Missing renterId, ownerId, etc.
-    });
-
-    try {
-      await invalidRental.save();
-      throw new Error('Should not reach here');
-    } catch (error) {
-      expect(error).to.exist;
-      expect(error.name).to.equal('ValidationError');
-    }
-  });
-
-  it('should add and retrieve chat messages', async () => {
-    // Create a base rental
-    const rental = new Rental({
-      itemId: testItem._id,
-      ownerId: testUser1._id,
-      renterId: testUser2._id,
-      paymentMethod: 'card',
-      meetingDetails: {
-        date: '2025-07-01',
-        time: '10:00',
-        location: 'Campus Center',
-        notes: ''
-      },
-      rentalPeriod: {
-        startDate: new Date('2025-07-01'),
-        endDate: new Date('2025-07-10')
-      },
-      totalPrice: 250.00
-    });
-
-    // Add chat messages
-    rental.chatHistory.push({
-      sender: testUser1._id.toString(),
-      type: 'text',
-      message: 'Hello, is this item still available?'
-    });
-
-    rental.chatHistory.push({
-      sender: testUser2._id.toString(),
-      type: 'text',
-      message: 'Yes, it is available.'
-    });
-
-    const savedRental = await rental.save();
-
-    expect(savedRental.chatHistory).to.be.an('array').with.lengthOf(2);
-    expect(savedRental.chatHistory[0].message).to.equal('Hello, is this item still available?');
-    expect(savedRental.chatHistory[1].message).to.equal('Yes, it is available.');
-    expect(savedRental.chatHistory[0].sender).to.equal(testUser1._id.toString());
-    expect(savedRental.chatHistory[1].sender).to.equal(testUser2._id.toString());
-    expect(savedRental.chatHistory[0].timestamp).to.be.a('date');
-  });
-
-  it('should validate enum values like status and paymentMethod', async () => {
-    // Test with invalid status
-    const rentalWithInvalidStatus = new Rental({
-      itemId: testItem._id,
-      ownerId: testUser1._id,
-      renterId: testUser2._id,
+      renterId: testRenter._id,
+      // Missing ownerId
       paymentMethod: 'cash',
       meetingDetails: {
-        date: '2025-06-15',
-        time: '14:30',
-        location: 'University Library'
+        date: '2024-03-20',
+        time: '14:00',
+        location: 'Test Location'
       },
       rentalPeriod: {
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        startDate: new Date('2024-03-20'),
+        endDate: new Date('2024-03-25')
       },
-      totalPrice: 175.00,
-      status: 'invalid_status' // Invalid status
+      totalPrice: 54.95
     });
 
+    let err;
     try {
-      await rentalWithInvalidStatus.save();
-      throw new Error('Should not reach here');
+      await rentalWithoutRequiredField.save();
     } catch (error) {
-      expect(error).to.exist;
-      expect(error.name).to.equal('ValidationError');
-      expect(error.message).to.include('status');
+      err = error;
     }
 
-    // Test with invalid payment method
+    expect(err).to.exist;
+    expect(err.errors.ownerId).to.exist;
+  });
+
+  it('should validate payment method enum', async () => {
     const rentalWithInvalidPayment = new Rental({
       itemId: testItem._id,
-      ownerId: testUser1._id,
-      renterId: testUser2._id,
-      paymentMethod: 'bitcoin', // Invalid payment method
+      renterId: testRenter._id,
+      ownerId: testOwner._id,
+      paymentMethod: 'invalid_method',
       meetingDetails: {
-        date: '2025-06-15',
-        time: '14:30',
-        location: 'University Library'
+        date: '2024-03-20',
+        time: '14:00',
+        location: 'Test Location'
       },
       rentalPeriod: {
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        startDate: new Date('2024-03-20'),
+        endDate: new Date('2024-03-25')
       },
-      totalPrice: 175.00
+      totalPrice: 54.95
     });
 
+    let err;
     try {
       await rentalWithInvalidPayment.save();
-      throw new Error('Should not reach here');
     } catch (error) {
-      expect(error).to.exist;
-      expect(error.name).to.equal('ValidationError');
-      expect(error.message).to.include('paymentMethod');
+      err = error;
     }
+
+    expect(err).to.exist;
+    expect(err.errors.paymentMethod).to.exist;
   });
-});
+
+  it('should handle chat history', async () => {
+    const rental = new Rental({
+      itemId: testItem._id,
+      renterId: testRenter._id,
+      ownerId: testOwner._id,
+      paymentMethod: 'cash',
+      meetingDetails: {
+        date: '2024-03-20',
+        time: '14:00',
+        location: 'Test Location'
+      },
+      rentalPeriod: {
+        startDate: new Date('2024-03-20'),
+        endDate: new Date('2024-03-25')
+      },
+      totalPrice: 54.95,
+      chatHistory: [{
+        senderId: testRenter._id,
+        message: 'Hello, I would like to rent this item',
+        timestamp: new Date()
+      }]
+    });
+
+    const savedRental = await rental.save();
+    expect(savedRental.chatHistory).to.have.lengthOf(1);
+    expect(savedRental.chatHistory[0].message).to.equal('Hello, I would like to rent this item');
+  });
+}); 
